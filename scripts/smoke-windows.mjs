@@ -146,6 +146,72 @@ function heading(evaluatePage, title) {
   )
 }
 
+async function click(page, label, scope = 'main') {
+  await waitFor(
+    () =>
+      page(`(() => {
+      const button = [...document.querySelectorAll(${JSON.stringify(scope + ' button')})]
+        .find(item => item.textContent.trim() === ${JSON.stringify(label)} && !item.disabled)
+      button?.click()
+      return !!button
+    })()`),
+    label,
+  )
+}
+
+function visible(page, text, scope = 'main') {
+  return waitFor(
+    () =>
+      page(
+        `document.querySelector(${JSON.stringify(scope)})?.textContent.includes(${JSON.stringify(text)})`,
+      ),
+    text,
+  )
+}
+
+async function fill(page, label, value, scope = 'main form') {
+  await waitFor(
+    () =>
+      page(`(() => {
+      const field = [...document.querySelectorAll(${JSON.stringify(scope + ' label')})]
+        .find(item => item.textContent.trim().startsWith(${JSON.stringify(label)}))?.control
+      if (!field || field.matches(':disabled')) return false
+      field.value = ${JSON.stringify(value)}
+      field.dispatchEvent(new Event(field.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }))
+      return true
+    })()`),
+    label,
+  )
+}
+
+async function openPage(page, name) {
+  await click(page, name, 'nav[aria-label="Main navigation"]')
+  await heading(page, name)
+}
+
+const journalTotals = '[aria-label="Daily nutrition totals"]'
+
+async function openJournalDate(page, date) {
+  await waitFor(
+    () =>
+      page(`(() => {
+      const input = document.querySelector('[aria-label="Journal date"]')
+      if (!input || input.disabled) return false
+      input.value = ${JSON.stringify(date)}
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+      return true
+    })()`),
+    'the journal date picker',
+  )
+  await waitFor(
+    () =>
+      page(
+        `document.querySelector('[aria-label="Journal date"]').value === ${JSON.stringify(date)}`,
+      ),
+    `journal date ${date}`,
+  )
+}
+
 try {
   await inApp(async (page) => {
     await heading(page, 'Set up FitTrack')
@@ -182,6 +248,46 @@ try {
       () => page(`document.body.textContent.includes('Settings saved.')`),
       'settings confirmation',
     )
+
+    await openPage(page, 'Workouts')
+    await click(page, 'New routine')
+    await fill(page, 'Routine name', 'Foundation Strength')
+    await click(page, 'Add exercise')
+    await click(page, 'Save routine')
+    await visible(page, 'Routine saved.')
+    await click(page, 'Start workout')
+    await fill(page, 'Weight (kg)', '42.5')
+    await fill(page, 'Set notes', 'Saved before restart')
+    await click(page, 'Log set')
+    await visible(page, 'Logged')
+    await click(page, 'Pause workout')
+    await visible(page, 'Resume workout')
+
+    await openPage(page, 'Nutrition')
+    await click(page, 'Food presets')
+    await click(page, 'New preset')
+    await fill(page, 'Food or drink name', 'Test yogurt')
+    await fill(page, 'One serving', '100 g')
+    await fill(page, 'Calories', '120')
+    await fill(page, 'Protein', '9')
+    await click(page, 'Save preset')
+    await visible(page, 'Food preset saved.')
+    await click(page, 'Log preset')
+    await fill(page, 'Date', '2026-11-10')
+    await fill(page, 'Servings consumed', '1.5')
+    await click(page, 'Log entry')
+    await visible(page, '180', journalTotals)
+
+    await click(page, 'Food presets')
+    await click(page, 'Log preset')
+    await fill(page, 'Date', '2026-11-11')
+    await click(page, 'Log entry')
+    await visible(page, '120', journalTotals)
+    await click(page, 'Food presets')
+    await click(page, 'Edit')
+    await fill(page, 'Calories', '222')
+    await click(page, 'Save preset')
+    await visible(page, '222 kcal')
   })
 
   await access(join(appData, 'FitTrack', 'fittrack.sqlite3'))
@@ -203,6 +309,37 @@ try {
       '2050',
     )
     assert.equal(await page(`document.getElementById('theme').value`), 'dark')
+
+    await openPage(page, 'Workouts')
+    await visible(page, 'Saved before restart')
+    await click(page, 'Resume workout')
+    await visible(page, 'Pause workout')
+    await click(page, 'Finish workout')
+    await click(page, 'Finish workout', '[role="dialog"]')
+    await visible(page, 'Workout completed.')
+    await visible(page, '42.5 kg')
+    await click(page, 'Routines')
+    await click(page, 'Edit')
+    await fill(page, 'Routine name', 'Revised Strength')
+    await click(page, 'Save routine')
+    await visible(page, 'Revised Strength')
+    await click(page, 'History')
+    await visible(page, 'Foundation Strength')
+    await visible(page, 'Saved before restart')
+    await click(page, 'Routines')
+    await click(page, 'Start workout')
+    await visible(page, 'Previous session')
+    await visible(page, '42.5 kg')
+
+    await openPage(page, 'Nutrition')
+    await openJournalDate(page, '2026-11-10')
+    await visible(page, '180', journalTotals)
+    await openJournalDate(page, '2026-11-11')
+    await visible(page, '120', journalTotals)
+    await click(page, 'Edit')
+    await fill(page, 'Servings consumed', '2')
+    await click(page, 'Save changes')
+    await visible(page, '240', journalTotals)
   })
   console.log(
     'Windows WebView smoke passed with external browser traffic blocked.',

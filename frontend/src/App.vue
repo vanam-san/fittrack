@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { Activity, LayoutDashboard, Settings2 } from 'lucide-vue-next'
+import {
+  Activity,
+  Dumbbell,
+  LayoutDashboard,
+  Settings2,
+  Utensils,
+} from 'lucide-vue-next'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import DashboardView from '@/features/dashboard/DashboardView.vue'
+import NutritionView from '@/features/nutrition/NutritionView.vue'
 import SettingsForm from '@/features/settings/SettingsForm.vue'
+import WorkoutsView from '@/features/workouts/WorkoutsView.vue'
 import {
   loadSettings,
   saveSettings,
@@ -10,7 +18,13 @@ import {
 } from '@/services/settings'
 
 const state = ref<Awaited<ReturnType<typeof loadSettings>>>()
-const page = ref<'dashboard' | 'settings'>('dashboard')
+const navigation = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'workouts', label: 'Workouts', icon: Dumbbell },
+  { id: 'nutrition', label: 'Nutrition', icon: Utensils },
+  { id: 'settings', label: 'Settings', icon: Settings2 },
+] as const
+const page = ref<(typeof navigation)[number]['id']>('dashboard')
 const main = ref<HTMLElement>()
 const loadError = ref('')
 const saveError = ref('')
@@ -91,25 +105,19 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
       <nav
         v-if="state?.setupComplete"
         aria-label="Main navigation"
-        class="flex gap-1 md:flex-col"
+        class="flex flex-wrap gap-1 md:flex-col"
       >
         <button
+          v-for="item in navigation"
+          :key="item.id"
           type="button"
           class="fit-nav"
-          :aria-current="page === 'dashboard' ? 'page' : undefined"
+          :aria-current="page === item.id ? 'page' : undefined"
           :disabled="saving"
-          @click="navigate('dashboard')"
+          @click="navigate(item.id)"
         >
-          <LayoutDashboard :size="17" aria-hidden="true" /> Dashboard
-        </button>
-        <button
-          type="button"
-          class="fit-nav"
-          :aria-current="page === 'settings' ? 'page' : undefined"
-          :disabled="saving"
-          @click="navigate('settings')"
-        >
-          <Settings2 :size="17" aria-hidden="true" /> Settings
+          <component :is="item.icon" :size="17" aria-hidden="true" />
+          {{ item.label }}
         </button>
       </nav>
     </aside>
@@ -129,7 +137,13 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
       <DashboardView
         v-else-if="state.setupComplete && page === 'dashboard'"
         :preferences="state.preferences"
+        @navigate="navigate"
       />
+      <WorkoutsView
+        v-else-if="state.setupComplete && page === 'workouts'"
+        :weight-unit="state.preferences.weightUnit"
+      />
+      <NutritionView v-else-if="state.setupComplete && page === 'nutrition'" />
       <div v-else class="max-w-2xl space-y-6">
         <header class="space-y-2">
           <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">

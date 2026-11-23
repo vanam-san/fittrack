@@ -11,7 +11,9 @@ import (
 	"github.com/vanam-san/fittrack/internal/config"
 	"github.com/vanam-san/fittrack/internal/database"
 	"github.com/vanam-san/fittrack/internal/desktop"
+	"github.com/vanam-san/fittrack/internal/nutrition"
 	"github.com/vanam-san/fittrack/internal/settings"
+	"github.com/vanam-san/fittrack/internal/workouts"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -32,6 +34,7 @@ func main() {
 func run() error {
 	var db *sql.DB
 	var preferences *settings.Service
+	services := []application.Service{}
 	path, err := config.DatabasePath()
 	if err == nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -43,14 +46,15 @@ func run() error {
 	} else {
 		defer db.Close()
 		preferences = settings.NewService(db)
+		services = append(services, application.NewService(desktop.NewWorkoutService(workouts.NewService(db))))
+		services = append(services, application.NewService(desktop.NewNutritionService(nutrition.NewService(db))))
 	}
+	services = append(services, application.NewService(desktop.NewSettingsService(preferences, path)))
 
 	app := application.New(application.Options{
 		Name:        "FitTrack",
 		Description: "Offline fitness tracking",
-		Services: []application.Service{
-			application.NewService(desktop.NewSettingsService(preferences, path)),
-		},
+		Services:    services,
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},

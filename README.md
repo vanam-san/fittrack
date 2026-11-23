@@ -1,6 +1,11 @@
 # FitTrack
 
-FitTrack is a local desktop fitness tracker. The current foundation includes first-run setup, a dashboard with empty states, and settings for a display name, weight units, appearance, and daily nutrition goals.
+FitTrack is a local desktop fitness tracker. It includes a dashboard, workout routines and session history, a dated nutrition journal, reusable food presets, and personal settings.
+
+## Tracking
+
+- **Workouts** — Build a routine from the exercise library or add custom exercises. Set the exercise order, planned sets, reps, and rest, then start a workout. Select **Log set** to record a finished set and start its rest timer. Select **Save draft** to keep an incomplete set. Pause and reopen FitTrack to resume from the saved state. Completed sessions keep the routine plan they started with.
+- **Nutrition** — Choose a journal date and add a meal, snack, or drink. Enter nutrients for one serving and the number of servings consumed. Daily totals include all three categories. Save food presets for reuse across dates. Editing a preset applies to future logs. Edit an existing entry from its journal date to correct the original record.
 
 ## Development
 
@@ -29,7 +34,7 @@ bun run typecheck
 bun run test
 ```
 
-On Windows, build the smoke executable after `wails3 build` so it uses the production frontend. The smoke tag enables the loopback test connection and blocks external WebView traffic. The test uses a temporary user data directory, completes setup, changes a setting, and verifies both saves after restart.
+On Windows, build the smoke executable after `wails3 build` so it uses the production frontend. The smoke tag enables the loopback test connection and blocks external WebView traffic. The test uses a temporary user data directory to verify settings, workout recovery and history, and dated nutrition snapshots through the desktop UI.
 
 ```powershell
 go build -tags 'production,fittrack_smoke' -o bin/fittrack-smoke.exe .

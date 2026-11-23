@@ -4,6 +4,10 @@
 
 package dbquery
 
+import (
+	"database/sql"
+)
+
 type AppSetting struct {
 	ID               int64
 	DisplayName      string
@@ -13,4 +17,90 @@ type AppSetting struct {
 	ProteinGoal      int64
 	CarbohydrateGoal int64
 	FatGoal          int64
+}
+
+type Exercise struct {
+	ID               int64
+	Name             string
+	PrimaryMuscle    string
+	SecondaryMuscles string
+	Equipment        string
+	Tracking         string
+	Notes            string
+	BuiltIn          int64
+}
+
+type Food struct {
+	ID            int64
+	Name          string
+	Serving       string
+	Calories      float64
+	Protein       float64
+	Carbohydrates float64
+	Fat           float64
+}
+
+type FoodLog struct {
+	ID            int64
+	FoodID        sql.NullInt64
+	LogDate       string
+	Category      string
+	Name          string
+	Serving       string
+	Quantity      float64
+	Calories      float64
+	Protein       float64
+	Carbohydrates float64
+	Fat           float64
+}
+
+type RoutineExercise struct {
+	RoutineID   int64
+	Position    int64
+	ExerciseID  int64
+	PlannedSets int64
+	PlannedReps int64
+	RestSeconds int64
+}
+
+type SessionExercise struct {
+	ID           int64
+	SessionID    int64
+	Position     int64
+	ExerciseID   int64
+	ExerciseName string
+	Tracking     string
+	PlannedSets  int64
+	PlannedReps  int64
+	RestSeconds  int64
+}
+
+type WorkoutRoutine struct {
+	ID   int64
+	Name string
+}
+
+type WorkoutSession struct {
+	ID           int64
+	RoutineName  string
+	SessionDate  string
+	StartedAt    int64
+	Status       string
+	CompletedAt  int64
+	ResumedAt    int64
+	ElapsedMs    int64
+	RestUntil    int64
+	PausedRestMs int64
+}
+
+type WorkoutSet struct {
+	ID                int64
+	SessionExerciseID int64
+	Position          int64
+	WeightKg          float64
+	Reps              int64
+	DurationSeconds   int64
+	DistanceM         float64
+	Done              int64
+	Notes             string
 }

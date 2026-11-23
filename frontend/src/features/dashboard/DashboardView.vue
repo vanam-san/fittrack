@@ -1,14 +1,37 @@
 <script setup lang="ts">
 import { Activity, Dumbbell, Flame, Scale } from 'lucide-vue-next'
+import { onMounted, ref } from 'vue'
+import { Button } from '@/components/ui/button'
+import NutritionTotals from '@/features/nutrition/NutritionTotals.vue'
+import { formatDate, localDate } from '@/lib/format'
+import { loadNutritionDay, type Day } from '@/services/nutrition'
 import type { Preferences } from '@/services/settings'
+import { loadWorkouts, type Overview } from '@/services/workouts'
 
-defineProps<{ preferences: Preferences }>()
+const props = defineProps<{ preferences: Preferences }>()
+const emit = defineEmits<{ navigate: [page: 'nutrition' | 'workouts'] }>()
+const nutrition = ref<Day>()
+const workouts = ref<Overview>()
+const nutritionError = ref(false)
+const workoutError = ref(false)
 
+const now = new Date()
 const today = new Intl.DateTimeFormat(undefined, {
   weekday: 'long',
   month: 'long',
   day: 'numeric',
-}).format(new Date())
+}).format(now)
+
+onMounted(async () => {
+  const [journal, training] = await Promise.allSettled([
+    Promise.resolve().then(() => loadNutritionDay(localDate(now))),
+    Promise.resolve().then(() => loadWorkouts(props.preferences.weightUnit)),
+  ])
+  if (journal.status === 'fulfilled') nutrition.value = journal.value
+  else nutritionError.value = true
+  if (training.status === 'fulfilled') workouts.value = training.value
+  else workoutError.value = true
+})
 
 const macros = [
   { label: 'Protein', key: 'proteinGoal' },
@@ -35,7 +58,19 @@ const macros = [
           <span class="fit-icon"><Flame :size="18" aria-hidden="true" /></span>
           <h2 id="nutrition-title" class="font-semibold">Today’s nutrition</h2>
         </div>
-        <p class="text-sm text-muted-foreground">No food logged today.</p>
+        <NutritionTotals
+          v-if="nutrition?.groups?.some((group) => group.entries?.length)"
+          :total="nutrition.total"
+        />
+        <p v-else class="text-sm text-muted-foreground">
+          {{
+            nutritionError
+              ? 'Could not load today’s nutrition.'
+              : nutrition
+                ? 'No food logged today.'
+                : 'Loading nutrition…'
+          }}
+        </p>
         <p v-if="preferences.calorieGoal" class="text-sm">
           Daily goal
           <strong class="ml-1"
@@ -58,6 +93,12 @@ const macros = [
             <dd v-else aria-label="No goal">—</dd>
           </div>
         </dl>
+        <Button
+          type="button"
+          variant="outline"
+          @click="emit('navigate', 'nutrition')"
+          >Open journal</Button
+        >
       </section>
       <section class="fit-panel space-y-4" aria-labelledby="weight-title">
         <div class="flex items-center gap-3">
@@ -75,7 +116,38 @@ const macros = [
           /></span>
           <h2 id="workout-title" class="font-semibold">Workouts</h2>
         </div>
-        <p class="text-sm text-muted-foreground">No workouts recorded yet.</p>
+        <div v-if="workouts?.active" class="text-sm">
+          <p class="font-medium">{{ workouts.active.name }}</p>
+          <p class="text-muted-foreground">
+            {{
+              workouts.active.status === 'paused'
+                ? 'Paused workout'
+                : 'Workout in progress'
+            }}
+          </p>
+        </div>
+        <div v-else-if="workouts?.history?.[0]" class="text-sm">
+          <p class="font-medium">{{ workouts.history[0].name }}</p>
+          <p class="text-muted-foreground">
+            Completed {{ formatDate(workouts.history[0].date) }}
+          </p>
+        </div>
+        <p v-else class="text-sm text-muted-foreground">
+          {{
+            workoutError
+              ? 'Could not load workouts.'
+              : workouts
+                ? 'No workouts recorded yet.'
+                : 'Loading workouts…'
+          }}
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          @click="emit('navigate', 'workouts')"
+        >
+          {{ workouts?.active ? 'Open current workout' : 'Open workouts' }}
+        </Button>
       </section>
     </div>
 
@@ -84,8 +156,27 @@ const macros = [
         <span class="fit-icon"><Activity :size="18" aria-hidden="true" /></span>
         <h2 id="activity-title" class="font-semibold">Recent activity</h2>
       </div>
-      <p class="mt-4 text-sm text-muted-foreground">
-        Your saved activity will appear here.
+      <ul v-if="workouts?.history?.length" class="mt-4 divide-y text-sm">
+        <li
+          v-for="session in workouts.history.slice(0, 3)"
+          :key="session.id"
+          class="flex flex-wrap justify-between gap-2 py-2"
+        >
+          <span>{{ session.name }}</span>
+          <span class="text-muted-foreground">{{
+            formatDate(session.date)
+          }}</span>
+        </li>
+      </ul>
+      <p v-else-if="workouts" class="mt-4 text-sm text-muted-foreground">
+        Completed workouts will appear here.
+      </p>
+      <p v-else class="mt-4 text-sm text-muted-foreground">
+        {{
+          workoutError
+            ? 'Could not load recent workouts.'
+            : 'Loading recent workouts…'
+        }}
       </p>
     </section>
   </div>

@@ -10,6 +10,23 @@ vi.mock('@/services/settings', () => ({
   saveSettings: vi.fn(),
 }))
 
+vi.mock('@/services/workouts', () => ({
+  loadWorkouts: vi.fn().mockResolvedValue({
+    exercises: [],
+    routines: [],
+    history: [],
+    active: null,
+  }),
+}))
+
+vi.mock('@/services/nutrition', () => ({
+  loadNutritionDay: vi.fn().mockResolvedValue({
+    date: '2026-11-23',
+    groups: [],
+    total: { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
+  }),
+}))
+
 const firstRun = {
   preferences: {
     displayName: '',
@@ -26,7 +43,8 @@ const firstRun = {
 
 describe('FitTrack settings', () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.mocked(loadSettings).mockReset()
+    vi.mocked(saveSettings).mockReset()
   })
   afterEach(() => document.documentElement.classList.remove('dark'))
 

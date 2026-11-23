@@ -39,6 +39,10 @@ func TestPreferencesSurviveRestart(t *testing.T) {
 	if !errors.As(err, &validation) {
 		t.Fatalf("expected validation error, got %v", err)
 	}
+	var initialMigrations int
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM schema_migrations").Scan(&initialMigrations); err != nil {
+		t.Fatal(err)
+	}
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +60,7 @@ func TestPreferencesSurviveRestart(t *testing.T) {
 		t.Fatalf("reopened state: got %+v, complete=%t, err=%v, want %+v", loaded, complete, err, saved)
 	}
 	var migrations int
-	if err := reopened.QueryRowContext(ctx, "SELECT COUNT(*) FROM schema_migrations").Scan(&migrations); err != nil || migrations != 1 {
+	if err := reopened.QueryRowContext(ctx, "SELECT COUNT(*) FROM schema_migrations").Scan(&migrations); err != nil || migrations != initialMigrations {
 		t.Fatalf("reopen should not reapply migration: count=%d, err=%v", migrations, err)
 	}
 }
