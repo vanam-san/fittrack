@@ -14,6 +14,7 @@ launch() {
     webkit_env+=(WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1)
   fi
   # Keep the test app offline and set its data path after dropping root privileges.
+  # runuser resets HOME to the test account instead of inheriting sudo's /root.
   sudo unshare --net bash -ec '
     ip link set lo up
     user=$1
@@ -22,6 +23,7 @@ launch() {
     exec runuser -u "$user" -- env "XDG_DATA_HOME=$data_home" "$@" \
       dbus-run-session -- xvfb-run -a timeout 12s /usr/local/bin/fittrack
   ' _ "$(id -un)" "$profile" "${webkit_env[@]}" || status=$?
+  # A timeout and a database confirm the app stayed up and initialized storage.
   if [[ $status != 124 || ! -s $db ]]; then
     echo "FitTrack offline launch failed (exit $status, expected timeout and database at $db)." >&2
     return 1

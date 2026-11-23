@@ -35,6 +35,28 @@ notes, the Windows x64 installer and standalone executable, the macOS universal
 disk image, and the Debian amd64 installer. Branch builds and pull requests
 continue to upload workflow artifacts.
 
+Use the **Native release** run for the tag to check each platform job and the
+final publish job. Once it succeeds, open the release page and check that all four
+downloads are listed. Keep the published tag attached to its original commit.
+If a published build needs a fix, use the next patch tag.
+
+## Diagnose package checks
+
+- **Debian** runs the installed executable as the runner user under Xvfb and
+  D-Bus. A private network namespace keeps the test offline while allowing
+  loopback. The test expects FitTrack to initialize a database under a temporary
+  `XDG_DATA_HOME` and stay running until the timeout. It then writes sample data
+  and checks that uninstalling and reinstalling preserves the database. GitHub's
+  Ubuntu runner blocks WebKit’s nested namespace, so the test launch disables
+  WebKit’s sandbox inside the offline namespace. The distributed app uses the
+  platform’s normal WebKit sandbox settings.
+- **macOS** verifies the disk image and the copied app’s signature, checks the
+  app binary for both `x86_64` and `arm64`, and launches the app twice to check
+  database preservation.
+- **Windows** uses the per-user NSIS installer and runs a WebView smoke test with
+  a temporary profile. The package check covers installation, uninstallation,
+  and reinstall.
+
 ## Release acceptance
 
 Run the following on a clean native desktop account for each artifact, including the standalone Windows executable. Keep a previous package and the platform runtime dependencies available locally. Disconnect before installing FitTrack and keep the machine offline for the run.

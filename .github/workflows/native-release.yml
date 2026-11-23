@@ -92,6 +92,7 @@ jobs:
           trap 'hdiutil detach "$RUNNER_TEMP/FitTrack-volume"' EXIT
           ditto "$RUNNER_TEMP/FitTrack-volume/fittrack.app" "$RUNNER_TEMP/fittrack.app"
           codesign --verify --deep --strict "$RUNNER_TEMP/fittrack.app"
+          # lipo treats everything after -verify_arch as an architecture.
           lipo "$RUNNER_TEMP/fittrack.app/Contents/MacOS/fittrack" -verify_arch x86_64 arm64
           database="$HOME/Library/Application Support/FitTrack/fittrack.sqlite3"
           test ! -e "$database"
@@ -147,6 +148,7 @@ jobs:
 
   release:
     if: github.ref_type == 'tag'
+    # Require every native build and package check before publishing.
     needs: native
     runs-on: ubuntu-24.04
     permissions:
@@ -165,6 +167,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
+          # An unmatched glob must produce an empty array so a missing installer fails the count check.
           shopt -s nullglob
           windows=(packages/FitTrack-Windows-x64/*-installer.exe)
           macos=(packages/FitTrack-macOS-universal/*.dmg)
