@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-  Activity,
   ChartNoAxesCombined,
   Dumbbell,
   LayoutDashboard,
@@ -19,8 +18,10 @@ import {
 } from 'vue'
 import DashboardView from '@/features/dashboard/DashboardView.vue'
 import NutritionView from '@/features/nutrition/NutritionView.vue'
+import DataFiles from '@/features/settings/DataFiles.vue'
 import SettingsForm from '@/features/settings/SettingsForm.vue'
 import WorkoutsView from '@/features/workouts/WorkoutsView.vue'
+import brandIcon from '../../build/appicon.png'
 import {
   loadSettings,
   saveSettings,
@@ -47,6 +48,7 @@ const main = ref<HTMLElement>()
 const loadError = ref('')
 const saveError = ref('')
 const saving = ref(false)
+const dataBusy = ref(false)
 const saved = ref(false)
 
 const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
@@ -79,7 +81,7 @@ async function load() {
 }
 
 async function save(preferences: Preferences) {
-  if (saving.value) return
+  if (saving.value || dataBusy.value) return
   saving.value = true
   saveError.value = ''
   saved.value = false
@@ -96,12 +98,19 @@ async function save(preferences: Preferences) {
 }
 
 async function navigate(next: typeof page.value) {
-  if (saving.value && next === 'settings') return
+  if (dataBusy.value || (saving.value && next === 'settings')) return
   page.value = next
   saveError.value = ''
   saved.value = false
   await nextTick()
   main.value?.focus()
+}
+
+async function reloadAfterReplacement() {
+  page.value = 'settings'
+  saveError.value = ''
+  saved.value = false
+  state.value = await loadSettings()
 }
 
 onMounted(() => {
@@ -115,9 +124,7 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
   <div class="min-h-screen md:flex">
     <aside class="fit-sidebar">
       <div class="flex items-center gap-3 font-semibold tracking-tight">
-        <span class="fit-brand"
-          ><Activity :size="20" aria-hidden="true"
-        /></span>
+        <img :src="brandIcon" alt="" width="36" height="36" />
         FitTrack
       </div>
       <nav
@@ -131,7 +138,7 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
           type="button"
           class="fit-nav"
           :aria-current="page === item.id ? 'page' : undefined"
-          :disabled="saving"
+          :disabled="saving || dataBusy"
           @click="navigate(item.id)"
         >
           <component :is="item.icon" :size="17" aria-hidden="true" />
@@ -183,7 +190,7 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
             }}
           </p>
         </header>
-        <div class="fit-panel">
+        <fieldset class="fit-panel" :disabled="dataBusy">
           <SettingsForm
             :preferences="state.preferences"
             :first-run="!state.setupComplete"
@@ -192,17 +199,14 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
             :saved="saved"
             @save="save"
           />
-        </div>
-        <section
-          v-if="state.setupComplete"
-          class="fit-panel space-y-2"
-          aria-labelledby="storage-title"
-        >
-          <h2 id="storage-title" class="font-semibold">Local database</h2>
-          <code class="block break-all text-sm text-muted-foreground">{{
-            state.databasePath
-          }}</code>
-        </section>
+        </fieldset>
+        <DataFiles
+          v-model:busy="dataBusy"
+          :database-path="state.databasePath"
+          :backup-path="state.backupPath"
+          :saving="saving"
+          :reload="reloadAfterReplacement"
+        />
       </div>
     </main>
   </div>

@@ -45,6 +45,8 @@ node scripts/smoke-windows.mjs
 
 ## Local data
 
-Settings shows the SQLite database path. Windows uses `%LOCALAPPDATA%\FitTrack`, macOS uses `~/Library/Application Support/FitTrack`, and Linux uses `$XDG_DATA_HOME/FitTrack` or `~/.local/share/FitTrack`.
+**Settings → Data and recovery** shows the database and backup locations. You can export and import CSV or JSON, create a SQLite backup, and restore a validated backup.
 
-See the [project brief](docs/FitTrack_Project_Sheet_Updated.md) and [foundation decisions](docs/foundation.md) for the implementation scope and migration strategy.
+See the [user guide](docs/user-guide.md) for installation, offline prerequisites, file formats, and recovery. See the [native release checks](docs/release-checks.md) for packaging commands and the release checklist.
+
+See the [project brief](docs/FitTrack_Project_Sheet_Updated.md) and [foundation decisions](docs/foundation.md) for the original scope and migration strategy.

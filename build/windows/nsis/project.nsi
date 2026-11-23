@@ -22,7 +22,7 @@ Unicode true
 ## !define INFO_PROJECTNAME    "my-project" # Default "FitTrack"
 ## !define INFO_COMPANYNAME    "FitTrack" # Default "FitTrack"
 ## !define INFO_PRODUCTNAME    "My Product Name" # Default "FitTrack"
-## !define INFO_PRODUCTVERSION "1.0.0"     # Default "0.1.0"
+## !define INFO_PRODUCTVERSION "1.0.0"     # Default "0.2.0"
 ## !define INFO_COPYRIGHT      "(c) Now, FitTrack" # Default "© 2026, FitTrack"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
@@ -34,6 +34,22 @@ Unicode true
 ## Include the wails tools
 ####
 !include "wails_tools.nsh"
+
+# The evergreen standalone runtime can be installed before FitTrack while offline.
+!macro fittrack.requireWebView2
+    SetRegView 64
+    ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+    ${If} $0 == ""
+    ${OrIf} $0 == "0.0.0.0"
+        ReadRegStr $0 HKCU "Software\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+    ${EndIf}
+    ${If} $0 == ""
+    ${OrIf} $0 == "0.0.0.0"
+        MessageBox MB_OK|MB_ICONSTOP "Install the Microsoft Edge WebView2 Evergreen Runtime before installing FitTrack." /SD IDOK
+        SetErrorLevel 2
+        Quit
+    ${EndIf}
+!macroend
 
 # The version information for this two must consist of 4 parts
 VIProductVersion "${INFO_PRODUCTVERSION}.0"
@@ -87,7 +103,7 @@ FunctionEnd
 Section
     !insertmacro wails.setShellContext
 
-    !insertmacro wails.webview2runtime
+    !insertmacro fittrack.requireWebView2
 
     SetOutPath $INSTDIR
     
@@ -107,7 +123,7 @@ Section "uninstall"
 
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
 
-    RMDir /r $INSTDIR
+    Delete "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
@@ -116,4 +132,5 @@ Section "uninstall"
     !insertmacro wails.unassociateCustomProtocols
 
     !insertmacro wails.deleteUninstaller
+    RMDir "$INSTDIR"
 SectionEnd

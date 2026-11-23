@@ -4,11 +4,25 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.vue'
 import { loadSettings, saveSettings } from '@/services/settings'
+import {
+  ChooseInput,
+  Replace,
+} from '../bindings/github.com/vanam-san/fittrack/internal/desktop/datafilesservice'
 
 vi.mock('@/services/settings', () => ({
   loadSettings: vi.fn(),
   saveSettings: vi.fn(),
 }))
+
+vi.mock(
+  '../bindings/github.com/vanam-san/fittrack/internal/desktop/datafilesservice',
+  () => ({
+    Backup: vi.fn(),
+    ChooseInput: vi.fn(),
+    Export: vi.fn(),
+    Replace: vi.fn(),
+  }),
+)
 
 vi.mock('@/services/workouts', () => ({
   loadWorkouts: vi.fn().mockResolvedValue({
@@ -43,6 +57,7 @@ const firstRun = {
   },
   setupComplete: false,
   databasePath: 'fittrack.sqlite3',
+  backupPath: 'backups',
 }
 
 describe('FitTrack settings', () => {
@@ -104,6 +119,58 @@ describe('FitTrack settings', () => {
         'Local storage is unavailable.',
       )
       expect(app.find('form').exists()).toBe(false)
+    } finally {
+      app.unmount()
+    }
+  })
+
+  it('requires confirmation before restoring and refreshes preferences after recovery', async () => {
+    vi.mocked(loadSettings)
+      .mockResolvedValueOnce(firstRun)
+      .mockResolvedValueOnce({
+        ...firstRun,
+        setupComplete: true,
+        preferences: { ...firstRun.preferences, displayName: 'Recovered' },
+      })
+    vi.mocked(ChooseInput).mockResolvedValue('C:\\backups\\example.sqlite3')
+    vi.mocked(Replace).mockResolvedValue('C:\\backups\\before.sqlite3')
+
+    const app = mount(App, { attachTo: document.body })
+    const restore = () =>
+      app
+        .findAll('button')
+        .find((button) => button.text() === 'Restore backup')!
+    const dialog = () => document.querySelector('[role="dialog"]')
+    const dialogButton = (label: string) =>
+      Array.from(dialog()!.querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === label,
+      )!
+
+    try {
+      await flushPromises()
+      expect(app.text()).toContain('Default backup folder')
+      await restore().trigger('click')
+      await flushPromises()
+      expect(dialog()?.textContent).toContain('example.sqlite3')
+      expect(Replace).not.toHaveBeenCalled()
+      dialogButton('Cancel').click()
+      await flushPromises()
+      expect(Replace).not.toHaveBeenCalled()
+
+      await restore().trigger('click')
+      await flushPromises()
+      dialogButton('Restore backup').click()
+      await flushPromises()
+      expect(Replace).toHaveBeenCalledOnce()
+      expect(Replace).toHaveBeenCalledWith(
+        'restore',
+        'C:\\backups\\example.sqlite3',
+      )
+      expect(app.get('h1').text()).toBe('Settings')
+      expect(app.get<HTMLInputElement>('#display-name').element.value).toBe(
+        'Recovered',
+      )
+      expect(app.text()).toContain('Backup restored.')
     } finally {
       app.unmount()
     }

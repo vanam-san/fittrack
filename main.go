@@ -24,6 +24,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed build/appicon.png
+var appIcon []byte
+
 var windowsOptions application.WindowsOptions
 
 func main() {
@@ -52,12 +55,14 @@ func run() error {
 		services = append(services, application.NewService(desktop.NewNutritionService(nutrition.NewService(db))))
 		services = append(services, application.NewService(desktop.NewWeightService(weight.NewService(db))))
 		services = append(services, application.NewService(desktop.NewAnalyticsService(analytics.NewService(db))))
+		services = append(services, application.NewService(desktop.NewDataFilesService(database.NewDataFiles(db, path), path)))
 	}
 	services = append(services, application.NewService(desktop.NewSettingsService(preferences, path)))
 
 	app := application.New(application.Options{
 		Name:        "FitTrack",
 		Description: "Offline fitness tracking",
+		Icon:        appIcon,
 		Services:    services,
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

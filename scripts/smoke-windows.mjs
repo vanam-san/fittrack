@@ -233,8 +233,12 @@ async function openJournalDate(page, date) {
 }
 
 try {
-  await inApp(async (page) => {
+  await inApp(async (page, cdp) => {
     await heading(page, 'Set up FitTrack')
+    await waitFor(
+      () => page(`document.querySelector('.fit-sidebar img')?.naturalWidth > 0`),
+      'the bundled FitTrack icon',
+    )
     await page(`
       for (const [id, value] of Object.entries({
         'display-name': 'Offline smoke test', 'weight-unit': 'lb', theme: 'dark', calorieGoal: '2050'
@@ -258,6 +262,20 @@ try {
       `Array.from(document.querySelectorAll('nav button')).find(button => button.textContent.trim() === 'Settings').click()`,
     )
     await heading(page, 'Settings')
+    await visible(page, 'Default backup folder')
+    await visible(page, join(appData, 'FitTrack', 'backups'))
+    await visible(page, 'Export CSV')
+    await visible(page, 'Restore backup')
+    await page(`document.getElementById('display-name').focus()`)
+    for (const type of ['rawKeyDown', 'keyUp']) {
+      await cdp('Input.dispatchKeyEvent', {
+        type,
+        key: 'Tab',
+        code: 'Tab',
+        windowsVirtualKeyCode: 9,
+      })
+    }
+    assert.equal(await page(`document.activeElement.id`), 'weight-unit')
     await page(`
       const unit = document.getElementById('weight-unit')
       unit.value = 'kg'

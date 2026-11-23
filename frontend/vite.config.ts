@@ -13,6 +13,12 @@ export default defineConfig({
     // Wails proxies this exact port. A silent fallback would leave its webview disconnected.
     port: Number(process.env.WAILS_VITE_PORT || 9245),
     strictPort: true,
+    fs: {
+      allow: [
+        fileURLToPath(new URL('./', import.meta.url)),
+        fileURLToPath(new URL('../build/appicon.png', import.meta.url)),
+      ],
+    },
     // Docker Desktop bind mounts do not always forward host file events.
     watch: { usePolling: process.env.WAILS_VITE_POLLING === '1' },
   },

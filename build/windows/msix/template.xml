@@ -17,7 +17,7 @@
         PackageDisplayName="FitTrack"
         PublisherName="CN=FitTrack"
         PublisherDisplayName="FitTrack"
-        Version="0.1.0.0"
+        Version="0.2.0.0"
         PackageDescription="Offline fitness tracking">
         <Capabilities>
             <Capability Name="runFullTrust" />

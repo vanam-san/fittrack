@@ -1,0 +1,142 @@
+name: Native release checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, macos-15, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      WAILS_VERSION: v3.1.0
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+      - name: Install Linux tools and runtime
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libgtk-4-dev libwebkitgtk-6.0-dev dbus-x11 xvfb xauth
+      - name: Locate NSIS
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $nsisPath = Join-Path ${env:ProgramFiles(x86)} 'NSIS'
+          if (!(Test-Path -LiteralPath (Join-Path $nsisPath 'makensis.exe'))) {
+            choco install nsis --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Could not install NSIS.' }
+          }
+          $nsisPath >> $env:GITHUB_PATH
+      - name: Install Wails
+        run: |
+          go install "github.com/wailsapp/wails/v3/cmd/wails3@$WAILS_VERSION"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Build production app
+        run: wails3 build
+      - name: Run Go checks
+        run: |
+          test -z "$(gofmt -l main.go internal)"
+          go test . ./internal/...
+          go vet . ./internal/...
+      - name: Run frontend checks
+        working-directory: frontend
+        run: |
+          bun run format:check
+          bun run lint
+          bun run typecheck
+          bun run test
+      - name: Build and test Windows package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          wails3 package INSTALL_SCOPE=user
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go build -tags 'production,fittrack_smoke' -o bin/fittrack-smoke.exe .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/smoke-windows.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./scripts/check-windows-package.ps1
+      - name: Build and inspect macOS disk image
+        if: runner.os == 'macOS'
+        run: |
+          wails3 task darwin:package:universal
+          wails3 task darwin:create:dmg
+          image=(bin/*.dmg)
+          hdiutil verify "${image[0]}"
+          hdiutil attach -nobrowse -readonly -mountpoint "$RUNNER_TEMP/FitTrack-volume" "${image[0]}"
+          trap 'hdiutil detach "$RUNNER_TEMP/FitTrack-volume"' EXIT
+          ditto "$RUNNER_TEMP/FitTrack-volume/fittrack.app" "$RUNNER_TEMP/fittrack.app"
+          codesign --verify --deep --strict "$RUNNER_TEMP/fittrack.app"
+          lipo -verify_arch x86_64 arm64 "$RUNNER_TEMP/fittrack.app/Contents/MacOS/fittrack"
+          database="$HOME/Library/Application Support/FitTrack/fittrack.sqlite3"
+          test ! -e "$database"
+          launch() {
+            "$RUNNER_TEMP/fittrack.app/Contents/MacOS/fittrack" &
+            app_pid=$!
+            for attempt in {1..40}; do
+              kill -0 "$app_pid" || return 1
+              if test -s "$database"; then
+                sleep 2
+                kill -0 "$app_pid" || return 1
+                kill -TERM "$app_pid"
+                wait "$app_pid" || test "$?" -eq 143
+                return
+              fi
+              sleep 0.25
+            done
+            kill -TERM "$app_pid"
+            return 1
+          }
+          launch
+          before=$(shasum -a 256 "$database")
+          rm -rf -- "$RUNNER_TEMP/fittrack.app"
+          ditto "$RUNNER_TEMP/FitTrack-volume/fittrack.app" "$RUNNER_TEMP/fittrack.app"
+          launch
+          test "$(shasum -a 256 "$database")" = "$before"
+      - name: Build and test Debian package
+        if: runner.os == 'Linux'
+        run: |
+          wails3 task linux:create:deb
+          packages=(bin/*.deb)
+          bash scripts/check-deb-package.sh "${packages[0]}"
+      - uses: actions/upload-artifact@v7
+        if: runner.os == 'Windows'
+        with:
+          name: FitTrack-Windows-x64
+          path: |
+            bin/*-installer.exe
+            bin/fittrack.exe
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: runner.os == 'macOS'
+        with:
+          name: FitTrack-macOS-universal
+          path: bin/*.dmg
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: runner.os == 'Linux'
+        with:
+          name: FitTrack-Linux-amd64
+          path: bin/*.deb
+          if-no-files-found: error

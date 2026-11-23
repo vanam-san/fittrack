@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/vanam-san/fittrack/internal/database"
 	"github.com/vanam-san/fittrack/internal/settings"
 )
 
@@ -12,6 +13,7 @@ type SettingsState struct {
 	Preferences   settings.Preferences `json:"preferences"`
 	SetupComplete bool                 `json:"setupComplete"`
 	DatabasePath  string               `json:"databasePath"`
+	BackupPath    string               `json:"backupPath"`
 }
 
 type SettingsService struct {
@@ -32,7 +34,7 @@ func (s *SettingsService) Load(ctx context.Context) (SettingsState, error) {
 		slog.Error("could not load local settings")
 		return SettingsState{}, errors.New("FitTrack couldn't load your settings. Restart FitTrack and try again.")
 	}
-	return SettingsState{Preferences: preferences, SetupComplete: complete, DatabasePath: s.path}, nil
+	return s.state(preferences, complete), nil
 }
 
 func (s *SettingsService) Save(ctx context.Context, preferences settings.Preferences) (SettingsState, error) {
@@ -48,5 +50,12 @@ func (s *SettingsService) Save(ctx context.Context, preferences settings.Prefere
 		slog.Error("could not save local settings")
 		return SettingsState{}, errors.New("FitTrack couldn't save your settings. Try again.")
 	}
-	return SettingsState{Preferences: saved, SetupComplete: true, DatabasePath: s.path}, nil
+	return s.state(saved, true), nil
+}
+
+func (s *SettingsService) state(preferences settings.Preferences, complete bool) SettingsState {
+	return SettingsState{
+		Preferences: preferences, SetupComplete: complete,
+		DatabasePath: s.path, BackupPath: database.BackupDirectory(s.path),
+	}
 }
