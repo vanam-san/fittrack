@@ -116,17 +116,17 @@ func (s *Service) Day(ctx context.Context, date string) (Day, error) {
 				continue
 			}
 			nutrients := Nutrients{Calories: row.Calories, Protein: row.Protein, Carbohydrates: row.Carbohydrates, Fat: row.Fat}
-			total := nutrients.scale(row.Quantity)
+			total := nutrients.ForServings(row.Quantity)
 			group.Entries = append(group.Entries, Entry{
 				ID:           row.ID,
 				LogPlacement: LogPlacement{Date: row.LogDate, Category: row.Category, Quantity: row.Quantity},
 				Food:         Food{Name: row.Name, Serving: row.Serving, Nutrients: nutrients},
 				Total:        total,
 			})
-			group.Total.add(total)
+			group.Total.Add(total)
 		}
 		day.Groups = append(day.Groups, group)
-		day.Total.add(group.Total)
+		day.Total.Add(group.Total)
 	}
 	return day, nil
 }
@@ -170,14 +170,14 @@ func (s *Service) DeleteEntry(ctx context.Context, id int64) error {
 	return requireRow(count, err, "That food entry is no longer available.")
 }
 
-func (n Nutrients) scale(quantity float64) Nutrients {
+func (n Nutrients) ForServings(quantity float64) Nutrients {
 	return Nutrients{
 		Calories: n.Calories * quantity, Protein: n.Protein * quantity,
 		Carbohydrates: n.Carbohydrates * quantity, Fat: n.Fat * quantity,
 	}
 }
 
-func (n *Nutrients) add(other Nutrients) {
+func (n *Nutrients) Add(other Nutrients) {
 	n.Calories += other.Calories
 	n.Protein += other.Protein
 	n.Carbohydrates += other.Carbohydrates

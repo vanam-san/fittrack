@@ -8,11 +8,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/vanam-san/fittrack/internal/analytics"
 	"github.com/vanam-san/fittrack/internal/config"
 	"github.com/vanam-san/fittrack/internal/database"
 	"github.com/vanam-san/fittrack/internal/desktop"
 	"github.com/vanam-san/fittrack/internal/nutrition"
 	"github.com/vanam-san/fittrack/internal/settings"
+	"github.com/vanam-san/fittrack/internal/weight"
 	"github.com/vanam-san/fittrack/internal/workouts"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -48,6 +50,8 @@ func run() error {
 		preferences = settings.NewService(db)
 		services = append(services, application.NewService(desktop.NewWorkoutService(workouts.NewService(db))))
 		services = append(services, application.NewService(desktop.NewNutritionService(nutrition.NewService(db))))
+		services = append(services, application.NewService(desktop.NewWeightService(weight.NewService(db))))
+		services = append(services, application.NewService(desktop.NewAnalyticsService(analytics.NewService(db))))
 	}
 	services = append(services, application.NewService(desktop.NewSettingsService(preferences, path)))
 

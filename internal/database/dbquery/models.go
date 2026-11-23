@@ -75,6 +75,17 @@ type SessionExercise struct {
 	RestSeconds  int64
 }
 
+type WeightGoal struct {
+	ID       int64
+	WeightKg float64
+}
+
+type WeightMeasurement struct {
+	ID         int64
+	MeasuredOn string
+	WeightKg   float64
+}
+
 type WorkoutRoutine struct {
 	ID   int64
 	Name string

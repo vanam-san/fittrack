@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"github.com/vanam-san/fittrack/internal/database/dbquery"
+	"github.com/vanam-san/fittrack/internal/units"
 )
-
-const kgPerPound = 0.45359237
 
 func (s *Service) Start(ctx context.Context, routineID int64) (int64, error) {
 	var id int64
@@ -124,14 +123,10 @@ func displaySets(rows []dbquery.WorkoutSet, unit string) []Set {
 	}
 	sets := make([]Set, 0, len(rows))
 	for _, row := range rows {
-		weight := row.WeightKg
-		if unit == "lb" {
-			weight /= kgPerPound
-		}
 		sets = append(sets, Set{
 			ID: row.ID,
 			SetInput: SetInput{
-				Weight: weight, WeightUnit: unit, Reps: row.Reps, DurationSeconds: row.DurationSeconds,
+				Weight: units.WeightFromKG(row.WeightKg, unit), WeightUnit: unit, Reps: row.Reps, DurationSeconds: row.DurationSeconds,
 				DistanceM: row.DistanceM, Done: row.Done != 0, Notes: row.Notes,
 			},
 		})
@@ -238,14 +233,10 @@ func validateSet(id int64, tracking string, input SetInput) (dbquery.UpdateWorko
 		return update, inputError("Use up to 1,000 characters for set notes.")
 	}
 	if tracking == "weight_reps" {
-		update.WeightKg = input.Weight
-		switch input.WeightUnit {
-		case "lb":
-			update.WeightKg *= kgPerPound
-		case "kg":
-		default:
+		if input.WeightUnit != "kg" && input.WeightUnit != "lb" {
 			return update, inputError("Choose kilograms or pounds for set weight.")
 		}
+		update.WeightKg = units.WeightInKG(input.Weight, input.WeightUnit)
 		if !validNumber(update.WeightKg, 5000) {
 			return update, inputError("Enter a nonnegative set weight up to 5,000 kg or its equivalent.")
 		}

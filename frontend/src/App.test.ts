@@ -27,6 +27,10 @@ vi.mock('@/services/nutrition', () => ({
   }),
 }))
 
+vi.mock('@/services/weight', () => ({
+  loadWeightOverview: vi.fn().mockResolvedValue({ latest: null, goalKg: null }),
+}))
+
 const firstRun = {
   preferences: {
     displayName: '',

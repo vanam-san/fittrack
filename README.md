@@ -1,11 +1,13 @@
 # FitTrack
 
-FitTrack is a local desktop fitness tracker. It includes a dashboard, workout routines and session history, a dated nutrition journal, reusable food presets, and personal settings.
+FitTrack is a local desktop fitness tracker for workouts, nutrition, and body weight, with a dashboard and analytics.
 
 ## Tracking
 
 - **Workouts** — Build a routine from the exercise library or add custom exercises. Set the exercise order, planned sets, reps, and rest, then start a workout. Select **Log set** to record a finished set and start its rest timer. Select **Save draft** to keep an incomplete set. Pause and reopen FitTrack to resume from the saved state. Completed sessions keep the routine plan they started with.
 - **Nutrition** — Choose a journal date and add a meal, snack, or drink. Enter nutrients for one serving and the number of servings consumed. Daily totals include all three categories. Save food presets for reuse across dates. Editing a preset applies to future logs. Edit an existing entry from its journal date to correct the original record.
+- **Weight** — Log a dated measurement, correct or delete it from history, and set a target weight. Select a date range to review the trend. Changing kilograms or pounds in Settings updates the display and entry unit.
+- **Analytics** — Select a date range and group totals by day, Monday-start week, or calendar month. Compare calories and macros, body weight, workout frequency and active time, and exercise progression. Training volume sums load × reps for logged weighted sets in completed workouts. Personal records use the selected date range.
 
 ## Development
 
@@ -34,7 +36,7 @@ bun run typecheck
 bun run test
 ```
 
-On Windows, build the smoke executable after `wails3 build` so it uses the production frontend. The smoke tag enables the loopback test connection and blocks external WebView traffic. The test uses a temporary user data directory to verify settings, workout recovery and history, and dated nutrition snapshots through the desktop UI.
+On Windows, build the smoke executable after `wails3 build` so it uses the production frontend. The smoke tag enables the loopback test connection and blocks external WebView traffic. The test uses a temporary user data directory to verify settings, workout recovery and history, dated nutrition snapshots, weight persistence and unit changes, and analytics charts through the desktop UI.
 
 ```powershell
 go build -tags 'production,fittrack_smoke' -o bin/fittrack-smoke.exe .

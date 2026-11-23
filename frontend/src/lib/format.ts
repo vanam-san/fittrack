@@ -15,6 +15,19 @@ export function formatDate(date: string) {
   )
 }
 
+export function formatDateRange(from: string, to: string) {
+  return from === to
+    ? formatDate(from)
+    : `${formatDate(from)} – ${formatDate(to)}`
+}
+
+export function recentDateRange(days: number) {
+  const now = new Date()
+  const to = localDate(now)
+  now.setDate(now.getDate() - days + 1)
+  return { from: localDate(now), to }
+}
+
 export function errorMessage(error: unknown) {
   return error instanceof Error && error.message
     ? error.message

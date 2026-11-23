@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import {
   Activity,
+  ChartNoAxesCombined,
   Dumbbell,
   LayoutDashboard,
+  Scale,
   Settings2,
   Utensils,
 } from 'lucide-vue-next'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from 'vue'
 import DashboardView from '@/features/dashboard/DashboardView.vue'
 import NutritionView from '@/features/nutrition/NutritionView.vue'
 import SettingsForm from '@/features/settings/SettingsForm.vue'
@@ -18,10 +28,18 @@ import {
 } from '@/services/settings'
 
 const state = ref<Awaited<ReturnType<typeof loadSettings>>>()
+const WeightView = defineAsyncComponent(
+  () => import('@/features/weight/WeightView.vue'),
+)
+const AnalyticsView = defineAsyncComponent(
+  () => import('@/features/analytics/AnalyticsView.vue'),
+)
 const navigation = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'workouts', label: 'Workouts', icon: Dumbbell },
   { id: 'nutrition', label: 'Nutrition', icon: Utensils },
+  { id: 'weight', label: 'Weight', icon: Scale },
+  { id: 'analytics', label: 'Analytics', icon: ChartNoAxesCombined },
   { id: 'settings', label: 'Settings', icon: Settings2 },
 ] as const
 const page = ref<(typeof navigation)[number]['id']>('dashboard')
@@ -144,6 +162,14 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
         :weight-unit="state.preferences.weightUnit"
       />
       <NutritionView v-else-if="state.setupComplete && page === 'nutrition'" />
+      <WeightView
+        v-else-if="state.setupComplete && page === 'weight'"
+        :weight-unit="state.preferences.weightUnit"
+      />
+      <AnalyticsView
+        v-else-if="state.setupComplete && page === 'analytics'"
+        :weight-unit="state.preferences.weightUnit"
+      />
       <div v-else class="max-w-2xl space-y-6">
         <header class="space-y-2">
           <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">

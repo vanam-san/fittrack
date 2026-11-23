@@ -37,7 +37,7 @@ async function reservePort() {
   return port
 }
 
-function evaluate(socket, expression) {
+function command(socket, method, params) {
   // The test sends one command at a time and uses a fresh socket for each launch.
   return new Promise((done, reject) => {
     const timeout = setTimeout(() => {
@@ -49,7 +49,7 @@ function evaluate(socket, expression) {
       if (message.id !== 1) return
       clearTimeout(timeout)
       socket.removeEventListener('message', receive)
-      if (message.error || message.result.exceptionDetails) {
+      if (message.error || message.result?.exceptionDetails) {
         reject(
           new Error(
             JSON.stringify(message.error ?? message.result.exceptionDetails),
@@ -57,14 +57,14 @@ function evaluate(socket, expression) {
         )
         return
       }
-      done(message.result.result.value)
+      done(message.result)
     }
     socket.addEventListener('message', receive)
     socket.send(
       JSON.stringify({
         id: 1,
-        method: 'Runtime.evaluate',
-        params: { expression, returnByValue: true },
+        method,
+        params,
       }),
     )
   })
@@ -107,7 +107,16 @@ async function inApp(visit) {
     }, 'the FitTrack WebView')
     socket = new WebSocket(target.webSocketDebuggerUrl)
     await once(socket, 'open', { signal: AbortSignal.timeout(5000) })
-    await visit((expression) => evaluate(socket, expression))
+    await visit(
+      async (expression) =>
+        (
+          await command(socket, 'Runtime.evaluate', {
+            expression,
+            returnByValue: true,
+          })
+        ).result.value,
+      (method, params) => command(socket, method, params),
+    )
   } finally {
     socket?.close()
     if (app.exitCode === null) {
@@ -190,6 +199,17 @@ async function openPage(page, name) {
 }
 
 const journalTotals = '[aria-label="Daily nutrition totals"]'
+const history = '[aria-label="Measurement history"]'
+const analyticsNutrition = 'section[aria-labelledby="analytics-nutrition"]'
+
+function daysAgo(days) {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+  return date.toLocaleDateString('sv-SE')
+}
+
+const today = daysAgo(0)
+const olderMeasurement = daysAgo(45)
 
 async function openJournalDate(page, date) {
   await waitFor(
@@ -284,17 +304,46 @@ try {
     await click(page, 'Log entry')
     await visible(page, '120', journalTotals)
     await click(page, 'Food presets')
+    await click(page, 'Log preset')
+    await fill(page, 'Date', today)
+    await click(page, 'Log entry')
+    await visible(page, '120', journalTotals)
+    await click(page, 'Food presets')
     await click(page, 'Edit')
     await fill(page, 'Calories', '222')
     await click(page, 'Save preset')
     await visible(page, '222 kcal')
+
+    await openPage(page, 'Weight')
+    await fill(page, 'Date', olderMeasurement)
+    await fill(page, 'Weight (kg)', '84')
+    await click(page, 'Save measurement')
+    await visible(page, 'Measurement saved outside the displayed date range.')
+    await fill(page, 'Date', today)
+    await fill(page, 'Weight (kg)', '81.2')
+    await click(page, 'Save measurement')
+    await visible(page, '81.2 kg', history)
+    await fill(page, 'Target (kg)', '78')
+    await click(page, 'Save target')
+    await visible(page, 'Target weight saved.')
   })
 
   await access(join(appData, 'FitTrack', 'fittrack.sqlite3'))
-  await inApp(async (page) => {
+  await inApp(async (page, cdp) => {
     await heading(page, 'Dashboard')
     assert.ok(
       await page(`document.body.textContent.includes('Offline smoke test')`),
+    )
+    await visible(page, '81.2 kg', 'section[aria-labelledby="weight-title"]')
+    await visible(
+      page,
+      'Target 78 kg',
+      'section[aria-labelledby="weight-title"]',
+    )
+    await visible(
+      page,
+      '120 kcal',
+      'section[aria-labelledby="nutrition-title"]',
     )
     await page(
       `Array.from(document.querySelectorAll('nav button')).find(button => button.textContent.trim() === 'Settings').click()`,
@@ -340,6 +389,96 @@ try {
     await fill(page, 'Servings consumed', '2')
     await click(page, 'Save changes')
     await visible(page, '240', journalTotals)
+
+    await openPage(page, 'Dashboard')
+    await visible(
+      page,
+      'Foundation Strength',
+      'section[aria-labelledby="activity-title"]',
+    )
+    await openPage(page, 'Weight')
+    await visible(page, '81.2 kg', history)
+    const rangeForm = 'section[aria-labelledby="weight-trend-heading"] form'
+    await fill(page, 'From', olderMeasurement, rangeForm)
+    await fill(page, 'To', olderMeasurement, rangeForm)
+    await click(page, 'Apply range')
+    await visible(page, '84 kg', history)
+    assert.equal(
+      await page(`document.querySelector('${history}').children.length`),
+      1,
+    )
+    await fill(page, 'To', today, rangeForm)
+    await fill(page, 'From', today, rangeForm)
+    await click(page, 'Apply range')
+    await visible(page, '81.2 kg', history)
+    await click(page, 'Edit', history)
+    await fill(page, 'Weight (kg)', '80.5')
+    await click(page, 'Save changes')
+    await visible(page, '80.5 kg', history)
+
+    await openPage(page, 'Nutrition')
+    await openJournalDate(page, today)
+    await visible(page, '120', journalTotals)
+    await click(page, 'Edit')
+    await fill(page, 'Servings consumed', '2.5')
+    await click(page, 'Save changes')
+    await visible(page, '300', journalTotals)
+
+    await openPage(page, 'Analytics')
+    await fill(page, 'From', today)
+    await fill(page, 'To', today)
+    await fill(page, 'Group by', 'daily')
+    await click(page, 'Apply filters')
+    await visible(page, '300 kcal', analyticsNutrition)
+    await visible(page, 'Personal records in this range')
+    await visible(
+      page,
+      '42.5 kg',
+      'section[aria-labelledby="analytics-exercises"]',
+    )
+    await visible(
+      page,
+      '340 kg × reps',
+      'section[aria-labelledby="analytics-workouts"]',
+    )
+    const chartWidth = () =>
+      page(
+        `parseInt(document.querySelector('${analyticsNutrition} canvas')?.style.width, 10) || 0`,
+      )
+    const originalWidth = await waitFor(chartWidth, 'the analytics chart')
+    try {
+      await cdp('Emulation.setDeviceMetricsOverride', {
+        width: 690,
+        height: 720,
+        deviceScaleFactor: 1,
+        mobile: false,
+      })
+      await waitFor(async () => {
+        const width = await chartWidth()
+        return width > 0 && Math.abs(width - originalWidth) > 25
+      }, 'the resized analytics chart')
+    } finally {
+      await cdp('Emulation.clearDeviceMetricsOverride', {})
+    }
+
+    await openPage(page, 'Settings')
+    await fill(page, 'Weight unit', 'lb')
+    await click(page, 'Save changes')
+    await visible(page, 'Settings saved.')
+    await openPage(page, 'Dashboard')
+    await visible(page, '177.47 lb', 'section[aria-labelledby="weight-title"]')
+    await visible(
+      page,
+      'Target 171.96 lb',
+      'section[aria-labelledby="weight-title"]',
+    )
+    await openPage(page, 'Weight')
+    await visible(page, '177.47 lb', history)
+    await click(page, 'Delete', history)
+    await click(page, 'Delete measurement', '[role="dialog"]')
+    await visible(page, 'No measurements in this date range.')
+    await openPage(page, 'Dashboard')
+    await visible(page, '185.19 lb', 'section[aria-labelledby="weight-title"]')
   })
   console.log(
     'Windows WebView smoke passed with external browser traffic blocked.',

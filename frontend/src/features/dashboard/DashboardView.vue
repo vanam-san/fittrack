@@ -4,16 +4,25 @@ import { onMounted, ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import NutritionTotals from '@/features/nutrition/NutritionTotals.vue'
 import { formatDate, localDate } from '@/lib/format'
+import { formatWeight } from '@/lib/weight'
 import { loadNutritionDay, type Day } from '@/services/nutrition'
 import type { Preferences } from '@/services/settings'
+import {
+  loadWeightOverview,
+  type Overview as WeightOverview,
+} from '@/services/weight'
 import { loadWorkouts, type Overview } from '@/services/workouts'
 
 const props = defineProps<{ preferences: Preferences }>()
-const emit = defineEmits<{ navigate: [page: 'nutrition' | 'workouts'] }>()
+const emit = defineEmits<{
+  navigate: [page: 'nutrition' | 'workouts' | 'weight']
+}>()
 const nutrition = ref<Day>()
 const workouts = ref<Overview>()
+const weight = ref<WeightOverview>()
 const nutritionError = ref(false)
 const workoutError = ref(false)
+const weightError = ref(false)
 
 const now = new Date()
 const today = new Intl.DateTimeFormat(undefined, {
@@ -23,14 +32,17 @@ const today = new Intl.DateTimeFormat(undefined, {
 }).format(now)
 
 onMounted(async () => {
-  const [journal, training] = await Promise.allSettled([
+  const [journal, training, measurements] = await Promise.allSettled([
     Promise.resolve().then(() => loadNutritionDay(localDate(now))),
     Promise.resolve().then(() => loadWorkouts(props.preferences.weightUnit)),
+    Promise.resolve().then(() => loadWeightOverview()),
   ])
   if (journal.status === 'fulfilled') nutrition.value = journal.value
   else nutritionError.value = true
   if (training.status === 'fulfilled') workouts.value = training.value
   else workoutError.value = true
+  if (measurements.status === 'fulfilled') weight.value = measurements.value
+  else weightError.value = true
 })
 
 const macros = [
@@ -105,9 +117,32 @@ const macros = [
           <span class="fit-icon"><Scale :size="18" aria-hidden="true" /></span>
           <h2 id="weight-title" class="font-semibold">Latest weight</h2>
         </div>
-        <p class="text-sm text-muted-foreground">
-          No measurements recorded yet.
+        <div v-if="weight?.latest">
+          <p class="text-xl font-semibold tabular-nums">
+            {{ formatWeight(weight.latest.weightKg, preferences.weightUnit) }}
+          </p>
+          <p class="text-sm text-muted-foreground">
+            {{ formatDate(weight.latest.date) }}
+          </p>
+        </div>
+        <p v-else class="text-sm text-muted-foreground">
+          {{
+            weightError
+              ? 'Could not load weight.'
+              : weight
+                ? 'No measurements recorded yet.'
+                : 'Loading weight…'
+          }}
         </p>
+        <p v-if="weight?.goalKg != null" class="text-sm text-muted-foreground">
+          Target {{ formatWeight(weight.goalKg, preferences.weightUnit) }}
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          @click="emit('navigate', 'weight')"
+          >Open weight log</Button
+        >
       </section>
       <section class="fit-panel space-y-4" aria-labelledby="workout-title">
         <div class="flex items-center gap-3">
