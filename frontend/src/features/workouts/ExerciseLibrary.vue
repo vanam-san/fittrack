@@ -6,7 +6,9 @@ import { trackingLabels } from './tracking'
 import type { Exercise, ExerciseInput } from '@/services/workouts'
 
 const props = defineProps<{ exercises: Exercise[]; busy: boolean }>()
-const emit = defineEmits<{ save: [input: ExerciseInput] }>()
+const emit = defineEmits<{
+  save: [input: ExerciseInput, addAnother: boolean]
+}>()
 const search = ref('')
 const draft = ref<ExerciseInput>()
 const matching = computed(() => {
@@ -32,9 +34,22 @@ function create() {
   }
 }
 
-function saved() {
-  draft.value = undefined
+function saved(addAnother: boolean) {
+  if (addAnother) {
+    create()
+  } else {
+    draft.value = undefined
+  }
   search.value = ''
+}
+
+function submit(event: SubmitEvent) {
+  if (!draft.value || props.busy) return
+  emit(
+    'save',
+    { ...draft.value },
+    event.submitter?.getAttribute('value') === 'another',
+  )
 }
 
 defineExpose({ saved })
@@ -60,11 +75,7 @@ defineExpose({ saved })
         ><Plus aria-hidden="true" /> Custom exercise</Button
       >
     </div>
-    <form
-      v-if="draft"
-      class="fit-panel space-y-4"
-      @submit.prevent="emit('save', { ...draft })"
-    >
+    <form v-if="draft" class="fit-panel space-y-4" @submit.prevent="submit">
       <h2 class="text-lg font-semibold">New exercise</h2>
       <fieldset :disabled="busy" class="grid gap-3 sm:grid-cols-2">
         <label class="fit-label"
@@ -119,8 +130,11 @@ defineExpose({ saved })
           />
         </label>
       </fieldset>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <Button type="submit" :disabled="busy">Save exercise</Button>
+        <Button type="submit" value="another" variant="outline" :disabled="busy"
+          >Save and add another</Button
+        >
         <Button
           type="button"
           variant="outline"

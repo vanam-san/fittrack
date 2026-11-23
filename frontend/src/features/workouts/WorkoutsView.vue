@@ -7,6 +7,7 @@ import { errorMessage, formatDate } from '@/lib/format'
 import ExerciseLibrary from './ExerciseLibrary.vue'
 import RoutineEditor from './RoutineEditor.vue'
 import WorkoutSession from './WorkoutSession.vue'
+import WorkoutCalendar from './WorkoutCalendar.vue'
 import { formatDuration } from './tracking'
 import {
   addSet,
@@ -36,6 +37,35 @@ const sections = [
 const section = ref<(typeof sections)[number]['key'] | 'live'>('routines')
 const overview = ref<Overview>()
 const historyDetail = ref<Session>()
+const showCalendar = ref(false)
+const historyDate = ref('')
+const history = computed(() => overview.value?.history ?? [])
+const workoutDates = computed(
+  () => new Set(history.value.map((session) => session.date)),
+)
+const visibleHistory = computed(() =>
+  historyDate.value
+    ? history.value.filter((session) => session.date === historyDate.value)
+    : history.value,
+)
+const historyIndex = computed(() =>
+  visibleHistory.value.findIndex(
+    (session) => session.id === historyDetail.value?.id,
+  ),
+)
+const newerWorkout = computed(
+  () => visibleHistory.value[historyIndex.value - 1],
+)
+const olderWorkout = computed(() =>
+  historyIndex.value >= 0
+    ? visibleHistory.value[historyIndex.value + 1]
+    : undefined,
+)
+
+function toggleCalendar() {
+  showCalendar.value = !showCalendar.value
+  if (!showCalendar.value) historyDate.value = ''
+}
 const edit = ref<Routine>()
 const library = ref<InstanceType<typeof ExerciseLibrary>>()
 const busy = ref(false)
@@ -82,10 +112,10 @@ function load() {
   })
 }
 
-function saveExercise(input: ExerciseInput) {
+function saveExercise(input: ExerciseInput, addAnother: boolean) {
   void run(async () => {
     await createExercise(input)
-    library.value?.saved()
+    library.value?.saved(addAnother)
     await refresh()
     notice.value = 'Exercise added to the library.'
   })
@@ -153,6 +183,7 @@ function changeStatus(target: 'paused' | 'active' | 'completed') {
       await changeWorkoutStatus(session.id, target)
       await refresh()
       section.value = 'history'
+      historyDate.value = ''
       historyDetail.value = await loadWorkoutSession(
         session.id,
         props.weightUnit,
@@ -317,42 +348,82 @@ onMounted(load)
 
       <div v-else-if="section === 'history'" class="space-y-4">
         <template v-if="historyDetail">
-          <Button
-            type="button"
-            variant="outline"
-            @click="historyDetail = undefined"
-            >Back to history</Button
-          >
-          <WorkoutSession :session="historyDetail" :busy="busy" />
-        </template>
-        <p
-          v-else-if="!overview.history?.length"
-          class="fit-panel text-sm text-muted-foreground"
-        >
-          Completed workouts will appear here.
-        </p>
-        <ul v-else class="space-y-2">
-          <li
-            v-for="session in overview.history"
-            :key="session.id"
-            class="fit-panel flex flex-wrap items-center justify-between gap-3"
-          >
-            <div>
-              <h2 class="font-semibold">{{ session.name }}</h2>
-              <p class="text-sm text-muted-foreground">
-                {{ formatDate(session.date) }} ·
-                {{ formatDuration(Math.floor(session.elapsedMs / 1000)) }}
-              </p>
-            </div>
+          <div class="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
               :disabled="busy"
-              @click="showHistory(session.id)"
-              >View workout</Button
+              @click="historyDetail = undefined"
+              >Back to history</Button
             >
-          </li>
-        </ul>
+            <Button
+              type="button"
+              variant="outline"
+              :disabled="busy || !newerWorkout"
+              @click="newerWorkout && showHistory(newerWorkout.id)"
+              >Newer workout</Button
+            >
+            <Button
+              type="button"
+              variant="outline"
+              :disabled="busy || !olderWorkout"
+              @click="olderWorkout && showHistory(olderWorkout.id)"
+              >Older workout</Button
+            >
+          </div>
+          <WorkoutSession :session="historyDetail" :busy="busy" />
+        </template>
+        <div v-show="!historyDetail" class="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            :aria-expanded="showCalendar"
+            :disabled="busy"
+            @click="toggleCalendar"
+            >{{ showCalendar ? 'Hide calendar' : 'Browse calendar' }}</Button
+          >
+          <WorkoutCalendar
+            v-if="showCalendar"
+            v-model="historyDate"
+            :workout-dates="workoutDates"
+            :busy="busy"
+          />
+          <h2 v-if="historyDate" class="font-semibold">
+            {{ formatDate(historyDate) }}
+          </h2>
+          <p
+            v-if="!visibleHistory.length"
+            class="fit-panel text-sm text-muted-foreground"
+          >
+            {{
+              historyDate
+                ? 'No completed workouts on this date.'
+                : 'Completed workouts will appear here.'
+            }}
+          </p>
+          <ul v-else class="space-y-2">
+            <li
+              v-for="session in visibleHistory"
+              :key="session.id"
+              class="fit-panel flex flex-wrap items-center justify-between gap-3"
+            >
+              <div>
+                <h2 class="font-semibold">{{ session.name }}</h2>
+                <p class="text-sm text-muted-foreground">
+                  {{ formatDate(session.date) }} ·
+                  {{ formatDuration(Math.floor(session.elapsedMs / 1000)) }}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                :disabled="busy"
+                @click="showHistory(session.id)"
+                >View workout</Button
+              >
+            </li>
+          </ul>
+        </div>
       </div>
 
       <WorkoutSession

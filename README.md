@@ -2,6 +2,18 @@
 
 FitTrack is a local desktop fitness tracker for workouts, nutrition, and body weight, with a dashboard and analytics.
 
+## Screenshots
+
+FitTrack running on Windows in dark mode with sample data.
+
+| Dashboard | Workout history |
+| --- | --- |
+| [![Dashboard showing today's nutrition, latest weight, and workout activity](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![Completed strength workout with logged sets and a set note](docs/screenshots/workout.png)](docs/screenshots/workout.png) |
+
+| Nutrition journal | Weight tracking |
+| --- | --- |
+| [![Daily nutrition journal showing calories, macros, and a meal entry](docs/screenshots/nutrition.png)](docs/screenshots/nutrition.png) | [![Weight tracking screen with measurement entry, target weight, and a trend chart](docs/screenshots/weight.png)](docs/screenshots/weight.png) |
+
 ## Tracking
 
 - **Workouts** — Build a routine from the exercise library or add custom exercises. Set the exercise order, planned sets, reps, and rest, then start a workout. Select **Log set** to record a finished set and start its rest timer. Select **Save draft** to keep an incomplete set. Pause and reopen FitTrack to resume from the saved state. Completed sessions keep the routine plan they started with.
@@ -47,6 +59,15 @@ node scripts/smoke-windows.mjs
 
 **Settings → Data and recovery** shows the database and backup locations. You can export and import CSV or JSON, create a SQLite backup, and restore a validated backup.
 
-See the [user guide](docs/user-guide.md) for installation, offline prerequisites, file formats, and recovery. See the [native release checks](docs/release-checks.md) for packaging commands and the release checklist.
+See the [documentation index](docs/README.md) for installation, data recovery, architecture, and releases.
 
-See the [project brief](docs/FitTrack_Project_Sheet_Updated.md) and [foundation decisions](docs/foundation.md) for the original scope and migration strategy.
+## Credits
+
+- FitTrack started from [Wails Vue Tailwind TypeScript v1.1.0](https://github.com/vanam-san/wails-template-vue-tailwind/releases/tag/v1.1.0). The [foundation notes](docs/foundation.md) record the exact starter revision.
+- James Gay’s [FitNotes](https://play.google.com/store/apps/details?id=com.github.jamesgay.fitnotes) inspired the workout calendar, history navigation, and quick exercise entry.
+- The desktop app uses [Wails](https://wails.io/) and [Go](https://go.dev/). Local storage uses [SQLite](https://sqlite.org/), [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite), and [sqlc](https://sqlc.dev/).
+- The interface uses [Vue](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vite.dev/), [Tailwind CSS](https://tailwindcss.com/), [shadcn-vue](https://www.shadcn-vue.com/), [Lucide](https://lucide.dev/), and [Apache ECharts](https://echarts.apache.org/). [Bun](https://bun.sh/) manages frontend dependencies and [Vitest](https://vitest.dev/) runs frontend tests.
+
+## Contributing and license
+
+See [Contributing](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). FitTrack is distributed under the [MIT License](LICENSE), which includes the starter’s copyright notice.

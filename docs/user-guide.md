@@ -14,6 +14,8 @@ Setup, logging, analytics, export, import, and recovery work from the installed 
 ## Record and review your activity
 
 - **Workouts** lets you build routines, start a workout, log sets, and resume an unfinished session after closing FitTrack.
+  - Open **History → Browse calendar** to find highlighted workout dates. Select a day to see its completed sessions, or choose **Show all dates** to clear the filter. Within a saved workout, use **Newer workout** and **Older workout** to move through the current results.
+  - In **Exercise library → Custom exercise**, choose **Save and add another** to save the exercise and open a blank form.
 - **Nutrition** lets you log meals, snacks, and drinks, use food presets, and edit entries by date.
 - **Weight** lets you record measurements and a target and review a date range.
 - **Analytics** groups workout, nutrition, and weight results for the date range you select.

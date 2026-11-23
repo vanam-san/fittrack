@@ -1,8 +1,9 @@
-name: Native release checks
+name: Native release
 
 on:
   push:
     branches: [master]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -30,6 +31,9 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '26'
+      - name: Set package version from release tag
+        if: github.ref_type == 'tag'
+        run: node scripts/set-release-version.mjs "$GITHUB_REF_NAME"
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: frontend/package.json
@@ -140,3 +144,38 @@ jobs:
           name: FitTrack-Linux-amd64
           path: bin/*.deb
           if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: native
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: native-release-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: FitTrack-*
+          path: packages
+      - name: Publish release with installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          shopt -s nullglob
+          windows=(packages/FitTrack-Windows-x64/*-installer.exe)
+          macos=(packages/FitTrack-macOS-universal/*.dmg)
+          linux=(packages/FitTrack-Linux-amd64/*.deb)
+          portable=packages/FitTrack-Windows-x64/fittrack.exe
+          test "${#windows[@]}" -eq 1
+          test "${#macos[@]}" -eq 1
+          test "${#linux[@]}" -eq 1
+          for asset in "${windows[@]}" "${macos[@]}" "${linux[@]}" "$portable"; do
+            test -s "$asset"
+          done
+          gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes \
+            --title "FitTrack $GITHUB_REF_NAME" \
+            "${windows[0]}" "${macos[0]}" "${linux[0]}" "$portable"

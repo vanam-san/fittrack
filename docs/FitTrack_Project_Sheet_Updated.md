@@ -633,8 +633,23 @@ claim signing/notarisation unless actually configured and tested.
 ### Phase 8 --- Optional enhancements
 
 Only after the core release is stable: supersets, advanced set types,
-workout calendar/heatmap, muscle distribution, substitutions, advanced
+workout heatmap, muscle distribution, substitutions, advanced
 chart comparisons, and optional CLI automation.
+
+### Phase 9 --- Workout logging and history
+
+FitTrack already covers several workflows in the FitNotes listing through its
+routine editor, previous-session set reference, distance and duration tracking,
+set notes, rest timer, and local backup and export. [FitNotes on Google Play](https://play.google.com/store/apps/details?id=com.github.jamesgay.fitnotes)
+
+- Add a calendar to workout history that highlights completed workout dates and
+  lists all saved sessions for the selected day.
+- Add newer and older workout navigation within the current history results.
+- Add **Save and add another** to the custom exercise form.
+
+These features use existing workout date and exercise records and require no
+database migration. Exercise-specific calendar filters, workout reordering during
+a session, and timer alerts are candidates for separate work.
 
 ## 11. Offline and privacy requirements
 
