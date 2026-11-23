@@ -4,18 +4,28 @@ set -euo pipefail
 package=$(realpath "$1")
 test "$(dpkg-deb -f "$package" Package)" = fittrack
 profile=$(mktemp -d)
-export XDG_DATA_HOME="$profile"
 db="$profile/FitTrack/fittrack.sqlite3"
 
 launch() {
-  # Isolate the native WebView from the network but keep its loopback available.
   local status=0
-  sudo unshare --net bash -c '
+  local webkit_env=()
+  if [[ ${GITHUB_ACTIONS:-} == true ]]; then
+    # The hosted runner blocks WebKit's nested user namespace.
+    webkit_env+=(WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1)
+  fi
+  # Keep the test app offline and set its data path after dropping root privileges.
+  sudo unshare --net bash -ec '
     ip link set lo up
-    exec runuser -u "$1" --preserve-environment -- dbus-run-session -- xvfb-run -a timeout 12s /usr/local/bin/fittrack
-  ' _ "$(id -un)" || status=$?
-  test "$status" -eq 124
-  test -s "$db"
+    user=$1
+    data_home=$2
+    shift 2
+    exec runuser -u "$user" -- env "XDG_DATA_HOME=$data_home" "$@" \
+      dbus-run-session -- xvfb-run -a timeout 12s /usr/local/bin/fittrack
+  ' _ "$(id -un)" "$profile" "${webkit_env[@]}" || status=$?
+  if [[ $status != 124 || ! -s $db ]]; then
+    echo "FitTrack offline launch failed (exit $status, expected timeout and database at $db)." >&2
+    return 1
+  fi
 }
 
 trap 'sudo dpkg -r fittrack >/dev/null; rm -rf -- "$profile"' EXIT

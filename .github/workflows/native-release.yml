@@ -92,7 +92,7 @@ jobs:
           trap 'hdiutil detach "$RUNNER_TEMP/FitTrack-volume"' EXIT
           ditto "$RUNNER_TEMP/FitTrack-volume/fittrack.app" "$RUNNER_TEMP/fittrack.app"
           codesign --verify --deep --strict "$RUNNER_TEMP/fittrack.app"
-          lipo -verify_arch x86_64 arm64 "$RUNNER_TEMP/fittrack.app/Contents/MacOS/fittrack"
+          lipo "$RUNNER_TEMP/fittrack.app/Contents/MacOS/fittrack" -verify_arch x86_64 arm64
           database="$HOME/Library/Application Support/FitTrack/fittrack.sqlite3"
           test ! -e "$database"
           launch() {
