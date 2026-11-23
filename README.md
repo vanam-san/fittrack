@@ -63,7 +63,7 @@ See the [documentation index](docs/README.md) for installation, data recovery, a
 
 ## Credits
 
-- FitTrack started from [Wails Vue Tailwind TypeScript v1.1.0](https://github.com/vanam-san/wails-template-vue-tailwind/releases/tag/v1.1.0). The [foundation notes](docs/foundation.md) record the exact starter revision.
+- FitTrack started from [Wails Vue Tailwind TypeScript](https://github.com/vanam-san/wails-template-vue-tailwind) v1.1.0.
 - James Gay’s [FitNotes](https://play.google.com/store/apps/details?id=com.github.jamesgay.fitnotes) inspired the workout calendar, history navigation, and quick exercise entry.
 - The desktop app uses [Wails](https://wails.io/) and [Go](https://go.dev/). Local storage uses [SQLite](https://sqlite.org/), [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite), and [sqlc](https://sqlc.dev/).
 - The interface uses [Vue](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vite.dev/), [Tailwind CSS](https://tailwindcss.com/), [shadcn-vue](https://www.shadcn-vue.com/), [Lucide](https://lucide.dev/), and [Apache ECharts](https://echarts.apache.org/). [Bun](https://bun.sh/) manages frontend dependencies and [Vitest](https://vitest.dev/) runs frontend tests.

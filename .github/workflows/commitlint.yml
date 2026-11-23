@@ -1,0 +1,41 @@
+name: Commitlint
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: frontend/package.json
+      - run: bun install --frozen-lockfile
+      - name: Lint pull request commits
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bun run commitlint --from "$BASE_SHA" --to HEAD
+      - name: Lint master history
+        if: github.event_name == 'push'
+        run: |
+          git rev-list --max-parents=0 HEAD | while read -r root; do
+            git show -s --format=%B "$root" | bun run commitlint
+          done
+          bun run commitlint --from "$(git rev-list --max-parents=0 HEAD | tail -n 1)" --to HEAD
