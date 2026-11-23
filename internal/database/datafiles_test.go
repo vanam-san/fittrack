@@ -19,7 +19,7 @@ func openDataFiles(t *testing.T) (*sql.DB, *DataFiles) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { db.Close() })
-	return db, NewDataFiles(db, path)
+	return db, NewDataFiles(db, path, t.TempDir())
 }
 
 func execData(t *testing.T, db *sql.DB, query string, args ...any) {
@@ -33,11 +33,11 @@ func seedData(t *testing.T, db *sql.DB) {
 	t.Helper()
 	execData(t, db, `
 INSERT INTO app_settings VALUES (1, 'Sam', 'lb', 'dark', 2050, 100, 230, 70);
-INSERT INTO exercises VALUES (42, 'Custom exercise', 'Back', '', 'Band', 'weight_reps', '', 0);
+INSERT INTO exercises (name, primary_muscle, equipment, tracking) VALUES ('Custom exercise', 'Back', 'Band', 'weight_reps');
 INSERT INTO workout_routines VALUES (5, 'Strength');
-INSERT INTO routine_exercises VALUES (5, 0, 42, 3, 8, 90);
+INSERT INTO routine_exercises VALUES (5, 0, (SELECT id FROM exercises WHERE name = 'Custom exercise'), 3, 8, 90);
 INSERT INTO workout_sessions VALUES (8, 'Strength', '2026-11-23', 1234, 'paused', 0, 0, 1100, 0, 500);
-INSERT INTO session_exercises VALUES (9, 8, 0, 42, 'Custom exercise', 'weight_reps', 3, 8, 90);
+INSERT INTO session_exercises VALUES (9, 8, 0, (SELECT id FROM exercises WHERE name = 'Custom exercise'), 'Custom exercise', 'weight_reps', 3, 8, 90);
 INSERT INTO workout_sets VALUES (11, 9, 0, 42.25, 8, 0, 0, 1, '');
 INSERT INTO foods VALUES (14, 'Yogurt', '100 g', 120, 9, 12, 4);
 INSERT INTO food_logs VALUES (15, 14, '2026-11-22', 'snack', 'Yogurt', '100 g', 1.25, 120, 9, 12, 4);
@@ -83,6 +83,9 @@ func TestPortableFilesRoundTrip(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			if filepath.Dir(checkpoint) != target.backupDir {
+				t.Fatalf("recovery backup saved outside the configured directory: %s", checkpoint)
+			}
 			if _, err := os.Stat(checkpoint); err != nil {
 				t.Fatal(err)
 			}
@@ -97,7 +100,7 @@ func TestPortableFilesRoundTrip(t *testing.T) {
 			defer dst.Close()
 			assertRecords(t, dst, want)
 			again := filepath.Join(t.TempDir(), "again."+format)
-			if err := NewDataFiles(dst, target.path).Export(t.Context(), again, format); err != nil {
+			if err := NewDataFiles(dst, target.path, target.backupDir).Export(t.Context(), again, format); err != nil {
 				t.Fatal(err)
 			}
 			a, err := os.ReadFile(path)
@@ -160,6 +163,9 @@ func TestBackupRestoreKeepsRecoveryCopy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if filepath.Dir(checkpoint) != files.backupDir {
+		t.Fatalf("recovery backup saved outside the configured directory: %s", checkpoint)
+	}
 	assertRecords(t, db, want)
 	result, err := db.ExecContext(t.Context(), "INSERT INTO weight_measurements (measured_on, weight_kg) VALUES ('2026-11-24', 80)")
 	if err != nil {
@@ -193,7 +199,13 @@ func TestBackupRestoreKeepsRecoveryCopy(t *testing.T) {
 func TestRestoreMigratesOlderBackup(t *testing.T) {
 	old, files := openDataFiles(t)
 	seedData(t, old)
-	execData(t, old, "DROP TABLE weight_measurements; DROP TABLE weight_goal; DROP INDEX completed_workout_date; DELETE FROM schema_migrations WHERE version = 4")
+	execData(t, old, `
+		DROP TABLE weight_measurements;
+		DROP TABLE weight_goal;
+		DROP INDEX completed_workout_date;
+		DELETE FROM exercises WHERE built_in = 1 AND id > 12;
+		DELETE FROM schema_migrations WHERE version > 3;
+	`)
 	backup := filepath.Join(t.TempDir(), "v3.sqlite3")
 	if err := files.Backup(t.Context(), backup); err != nil {
 		t.Fatal(err)
@@ -203,7 +215,7 @@ func TestRestoreMigratesOlderBackup(t *testing.T) {
 		t.Fatal(err)
 	}
 	data := snapshot(t, db)
-	if len(data["weight_measurements"]) != 0 || data["app_settings"][0]["display_name"] != "Sam" {
+	if len(data["weight_measurements"]) != 0 || data["app_settings"][0]["display_name"] != "Sam" || len(data["exercises"]) != 171 {
 		t.Fatal("restore did not migrate the original records")
 	}
 }

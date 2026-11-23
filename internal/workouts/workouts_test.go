@@ -33,11 +33,11 @@ func TestWorkoutSurvivesRestartAndRoutineChanges(t *testing.T) {
 		t.Fatal("expected a seeded exercise library")
 	}
 	press, err := service.CreateExercise(ctx, ExerciseInput{
-		Name: "Landmine Press", PrimaryMuscle: "Shoulders", Equipment: "Barbell", Tracking: "weight_reps",
+		Name: "Custom Landmine Press", PrimaryMuscle: "Shoulders", Equipment: "Barbell", Tracking: "weight_reps",
 	})
 	require(t, err)
 	carry, err := service.CreateExercise(ctx, ExerciseInput{
-		Name: "Farmer Carry", PrimaryMuscle: "Forearms", Equipment: "Dumbbells", Tracking: "distance_duration",
+		Name: "Custom Farmer Carry", PrimaryMuscle: "Forearms", Equipment: "Dumbbells", Tracking: "distance_duration",
 	})
 	require(t, err)
 	plans := []Plan{{ExerciseID: press, PlannedSets: 2, PlannedReps: 8, RestSeconds: 90},

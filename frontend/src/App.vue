@@ -46,6 +46,7 @@ const navigation = [
 const page = ref<(typeof navigation)[number]['id']>('dashboard')
 const main = ref<HTMLElement>()
 const loadError = ref('')
+const restoreError = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const dataBusy = ref(false)
@@ -75,6 +76,8 @@ async function load() {
   loadError.value = ''
   try {
     state.value = await loadSettings()
+    restoreError.value = state.value.restoreError ?? ''
+    if (restoreError.value) page.value = 'settings'
   } catch (error) {
     loadError.value = message(error, 'FitTrack could not load your settings.')
   }
@@ -113,6 +116,7 @@ async function reloadAfterReplacement() {
   saveError.value = ''
   saved.value = false
   state.value = await loadSettings()
+  restoreError.value = ''
 }
 
 onMounted(() => {
@@ -202,6 +206,9 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
             @save="save"
           />
         </fieldset>
+        <p v-if="restoreError" role="alert" class="text-sm text-destructive">
+          {{ restoreError }}
+        </p>
         <DataFiles
           v-model:busy="dataBusy"
           :database-path="state.databasePath"

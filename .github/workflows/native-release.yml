@@ -157,6 +157,9 @@ jobs:
       group: native-release-${{ github.ref }}
       cancel-in-progress: false
     steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v8
         with:
           pattern: FitTrack-*
@@ -179,6 +182,11 @@ jobs:
           for asset in "${windows[@]}" "${macos[@]}" "${linux[@]}" "$portable"; do
             test -s "$asset"
           done
-          gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes \
+          notes="docs/releases/$GITHUB_REF_NAME.md"
+          if ! test -s "$notes"; then
+            echo "Missing release notes: $notes" >&2
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" --verify-tag --notes-file "$notes" \
             --title "FitTrack $GITHUB_REF_NAME" \
             "${windows[0]}" "${macos[0]}" "${linux[0]}" "$portable"

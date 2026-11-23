@@ -175,4 +175,22 @@ describe('FitTrack settings', () => {
       app.unmount()
     }
   })
+
+  it('opens Data and recovery when an installer restore fails for an existing database', async () => {
+    const state = {
+      ...firstRun,
+      setupComplete: true,
+      restoreError: 'FitTrack could not restore the installer backup.',
+    }
+    vi.mocked(loadSettings).mockResolvedValue(state)
+    const app = mount(App)
+    try {
+      await flushPromises()
+      expect(app.get('h1').text()).toBe('Settings')
+      expect(app.get('[role="alert"]').text()).toBe(state.restoreError)
+      expect(app.text()).toContain('Restore backup')
+    } finally {
+      app.unmount()
+    }
+  })
 })

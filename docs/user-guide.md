@@ -11,6 +11,10 @@
 
 Setup, logging, analytics, export, import, and recovery work from the installed app with the network disconnected. On first launch, set your preferences or open **Data and recovery** on the setup screen to import records or restore a backup.
 
+The Windows installer includes a **FitTrack storage** page. Choose the database and backup folders independently, or leave either field blank to use its default. To transfer or recover your data, select a FitTrack `.sqlite3` backup and confirm the restore. FitTrack validates and restores the file on its first launch. If the restore fails, open **Data and recovery** to retry.
+
+Storage choices apply to the Windows account running Setup. Close FitTrack before rerunning Setup to change folders. If you choose a different database folder, the original database stays in its current folder. Select a backup during Setup to transfer its records and preferences to the new folder.
+
 ## Record and review your activity
 
 - **Workouts** lets you build routines, start a workout, log sets, and resume an unfinished session after closing FitTrack.
@@ -31,7 +35,7 @@ Open **Settings → Data and recovery** for the exact paths. The active database
 | macOS | `~/Library/Application Support/FitTrack` |
 | Linux | `$XDG_DATA_HOME/FitTrack` when set to an absolute path, otherwise `~/.local/share/FitTrack` |
 
-**Create backup** starts in the default backup folder and lets you choose a different destination. FitTrack shows the saved path when it finishes. Copy an important backup to a separate drive to recover after a device or disk failure.
+**Create backup** starts in the configured backup folder and lets you choose a different destination. FitTrack shows the saved path when it finishes. Copy an important backup to a separate drive to recover after a device or disk failure.
 
 ## Transfer records between installations
 
@@ -47,8 +51,8 @@ Keep the original export for transfer. Spreadsheet apps can change text, dates, 
 
 1. Choose **Create backup** for a full SQLite snapshot, including schema metadata.
 2. To recover, choose **Restore backup**, select the `.sqlite3` file, and confirm the filename shown.
-3. FitTrack validates the backup, prepares supported older backups for this version, and saves a `pre-restore-*.sqlite3` copy of the current database in the default backup folder. Restore replaces current records and preferences. If a restore fails during replacement, the existing database and its recovery copy remain available.
+3. FitTrack validates the backup, prepares supported older backups for this version, and saves a `pre-restore-*.sqlite3` copy of the current database in the configured backup folder. Restore replaces current records and preferences. If a restore fails during replacement, the existing database and its recovery copy remain available.
 
-Close FitTrack before upgrading or uninstalling. On Windows, run the newer installer with the same install scope or replace the portable executable. On macOS, replace the Applications bundle. On Linux, install the newer Debian package over the existing one. Standard uninstall removes the app. Your database and default backup folder live in the per-user data directory, where a reinstall can reuse them.
+Close FitTrack before upgrading or uninstalling. On Windows, run the newer installer with the same install scope or replace the portable executable. On macOS, replace the Applications bundle. On Linux, install the newer Debian package over the existing one. Standard uninstall removes the app. A reinstall can reuse your database and backups in their existing folders.
 
 If FitTrack cannot open the current database, quit all FitTrack windows. Move the data directory to a separate recovery location so the original database, sidecar files, and backups stay together. Relaunch FitTrack to create a fresh database, then restore a known-good backup from the moved folder or a separate drive. If FitTrack reports a newer backup schema, use the same or a newer FitTrack release than the one that created it.

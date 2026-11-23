@@ -290,6 +290,13 @@ try {
     await openPage(page, 'Workouts')
     await click(page, 'New routine')
     await fill(page, 'Routine name', 'Foundation Strength')
+    const exercise = await waitFor(
+      () =>
+        page(`[...document.querySelectorAll('main form select option')]
+          .find(option => option.textContent.trim() === 'Landmine Press')?.value`),
+      'Landmine Press in the exercise catalog',
+    )
+    await fill(page, 'Exercise', exercise)
     await click(page, 'Add exercise')
     await click(page, 'Save routine')
     await visible(page, 'Routine saved.')

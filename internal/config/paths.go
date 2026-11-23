@@ -6,7 +6,21 @@ import (
 	"runtime"
 )
 
-func DatabasePath() (string, error) {
+type Storage struct {
+	DatabasePath string
+	BackupPath   string
+	RestorePath  string
+}
+
+func StoragePaths() (Storage, error) {
+	dir, err := defaultDataDirectory()
+	if err != nil {
+		return Storage{}, err
+	}
+	return installerStorage(dir)
+}
+
+func defaultDataDirectory() (string, error) {
 	var base string
 	var err error
 	switch runtime.GOOS {
@@ -28,5 +42,12 @@ func DatabasePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(base, "FitTrack", "fittrack.sqlite3"), nil
+	return filepath.Join(base, "FitTrack"), nil
+}
+
+func storagePaths(databaseDir, backupDir, restore string) Storage {
+	if backupDir == "" {
+		backupDir = filepath.Join(databaseDir, "backups")
+	}
+	return Storage{filepath.Join(databaseDir, "fittrack.sqlite3"), filepath.Clean(backupDir), restore}
 }

@@ -13,12 +13,12 @@ import (
 )
 
 type DataFilesService struct {
-	files *database.DataFiles
-	path  string
+	files     *database.DataFiles
+	backupDir string
 }
 
-func NewDataFilesService(files *database.DataFiles, path string) *DataFilesService {
-	return &DataFilesService{files: files, path: path}
+func NewDataFilesService(files *database.DataFiles, backupDir string) *DataFilesService {
+	return &DataFilesService{files: files, backupDir: backupDir}
 }
 
 func (s *DataFilesService) Export(ctx context.Context, format string) (string, error) {
@@ -33,7 +33,7 @@ func (s *DataFilesService) Export(ctx context.Context, format string) (string, e
 }
 
 func (s *DataFilesService) Backup(ctx context.Context) (string, error) {
-	dir := database.BackupDirectory(s.path)
+	dir := s.backupDir
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return "", fmt.Errorf("open backup folder: %w", err)
 	}
@@ -53,8 +53,8 @@ func (s *DataFilesService) ChooseInput(operation string) (string, error) {
 		dialog.SetTitle("Choose a FitTrack export").AddFilter("FitTrack exports", "*.csv;*.json")
 	case "restore":
 		dialog.SetTitle("Choose a FitTrack backup").AddFilter("FitTrack backups", "*.sqlite3")
-		if dir := database.BackupDirectory(s.path); isDirectory(dir) {
-			dialog.SetDirectory(dir)
+		if isDirectory(s.backupDir) {
+			dialog.SetDirectory(s.backupDir)
 		}
 	default:
 		return "", fmt.Errorf("unknown file operation")

@@ -60,12 +60,12 @@ defineExpose({ saved })
     <div class="flex flex-wrap items-center justify-between gap-3">
       <label class="relative block w-full max-w-sm">
         <Search
-          class="absolute top-2.5 left-3 size-4 text-muted-foreground"
+          class="pointer-events-none absolute top-1/2 start-3 size-4 -translate-y-1/2 text-muted-foreground"
           aria-hidden="true"
         />
         <input
           v-model="search"
-          class="fit-field pl-9"
+          class="fit-field exercise-search"
           type="search"
           aria-label="Search exercises"
           placeholder="Search by exercise, muscle, or equipment"
@@ -168,3 +168,9 @@ defineExpose({ saved })
     </ul>
   </div>
 </template>
+
+<style scoped>
+.exercise-search {
+  padding-inline-start: 2.25rem;
+}
+</style>

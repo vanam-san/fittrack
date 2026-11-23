@@ -65,12 +65,13 @@ try {
     $seed = 'const { DatabaseSync } = require("node:sqlite"); const db = new DatabaseSync(process.argv[1]); db.exec("INSERT INTO app_settings VALUES (1, ''Package check'', ''kg'', ''system'', 0, 0, 0, 0); INSERT INTO weight_measurements (measured_on, weight_kg) VALUES (''2026-11-23'', 80)"); db.close()'
     node -e $seed $database
     if ($LASTEXITCODE -ne 0) { throw 'Could not seed the package test profile.' }
-    $before = (Get-FileHash -LiteralPath $database).Hash
     Install-FitTrack $installer
     Open-FitTrack
-    if ((Get-FileHash -LiteralPath $database).Hash -ne $before) {
-        throw 'Installing over an existing copy modified user data.'
-    }
+    # A schema or catalog migration can change the file while preserving records.
+    $verify = 'const assert = require("node:assert/strict"); const { DatabaseSync } = require("node:sqlite"); const db = new DatabaseSync(process.argv[1], { readOnly: true }); assert.equal(db.prepare("SELECT display_name FROM app_settings WHERE id = 1").get()?.display_name, "Package check"); assert.equal(db.prepare("SELECT weight_kg FROM weight_measurements WHERE measured_on = ?").get("2026-11-23")?.weight_kg, 80); db.close()'
+    node -e $verify $database
+    if ($LASTEXITCODE -ne 0) { throw 'Installing over an existing copy modified user records.' }
+    $before = (Get-FileHash -LiteralPath $database).Hash
 
     # An app uninstall must preserve the database and unrelated install-folder files.
     $unrelated = Join-Path $installDir 'keep-me.txt'

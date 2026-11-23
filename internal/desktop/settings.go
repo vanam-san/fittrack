@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/vanam-san/fittrack/internal/database"
+	"github.com/vanam-san/fittrack/internal/config"
 	"github.com/vanam-san/fittrack/internal/settings"
 )
 
@@ -14,20 +14,22 @@ type SettingsState struct {
 	SetupComplete bool                 `json:"setupComplete"`
 	DatabasePath  string               `json:"databasePath"`
 	BackupPath    string               `json:"backupPath"`
+	RestoreError  string               `json:"restoreError,omitempty"`
 }
 
 type SettingsService struct {
-	settings *settings.Service
-	path     string
+	settings     *settings.Service
+	storage      config.Storage
+	restoreError string
 }
 
-func NewSettingsService(service *settings.Service, path string) *SettingsService {
-	return &SettingsService{settings: service, path: path}
+func NewSettingsService(service *settings.Service, storage config.Storage, restoreError string) *SettingsService {
+	return &SettingsService{settings: service, storage: storage, restoreError: restoreError}
 }
 
 func (s *SettingsService) Load(ctx context.Context) (SettingsState, error) {
 	if s.settings == nil {
-		return SettingsState{}, errors.New("FitTrack couldn't open its local database. Check that your app data directory is writable, then restart FitTrack.")
+		return SettingsState{}, errors.New("FitTrack couldn't open its local database. Check that the selected database folder is writable, then restart FitTrack.")
 	}
 	preferences, complete, err := s.settings.Load(ctx)
 	if err != nil {
@@ -56,6 +58,7 @@ func (s *SettingsService) Save(ctx context.Context, preferences settings.Prefere
 func (s *SettingsService) state(preferences settings.Preferences, complete bool) SettingsState {
 	return SettingsState{
 		Preferences: preferences, SetupComplete: complete,
-		DatabasePath: s.path, BackupPath: database.BackupDirectory(s.path),
+		DatabasePath: s.storage.DatabasePath, BackupPath: s.storage.BackupPath,
+		RestoreError: s.restoreError,
 	}
 }

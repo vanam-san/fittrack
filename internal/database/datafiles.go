@@ -15,16 +15,13 @@ import (
 )
 
 type DataFiles struct {
-	db   *sql.DB
-	path string
+	db        *sql.DB
+	path      string
+	backupDir string
 }
 
-func NewDataFiles(db *sql.DB, path string) *DataFiles {
-	return &DataFiles{db: db, path: path}
-}
-
-func BackupDirectory(path string) string {
-	return filepath.Join(filepath.Dir(path), "backups")
+func NewDataFiles(db *sql.DB, path, backupDir string) *DataFiles {
+	return &DataFiles{db: db, path: path, backupDir: backupDir}
 }
 
 func (d *DataFiles) Export(ctx context.Context, path, format string) error {
@@ -226,7 +223,7 @@ func schema(ctx context.Context, db queryer) ([][4]string, error) {
 }
 
 func (d *DataFiles) checkpoint(ctx context.Context, conn *sql.Conn, prefix string) (string, error) {
-	dir := BackupDirectory(d.path)
+	dir := d.backupDir
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return "", err
 	}

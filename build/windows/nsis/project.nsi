@@ -66,6 +66,15 @@ VIAddVersionKey "ProductName"     "${INFO_PRODUCTNAME}"
 ManifestDPIAware true
 
 !include "MUI.nsh"
+!include "nsDialogs.nsh"
+
+!define FITTRACK_STORAGE_KEY "Software\FitTrack\Storage"
+Var DatabaseDirectory
+Var BackupDirectory
+Var RestoreSource
+Var DatabaseField
+Var BackupField
+Var RestoreField
 
 !define MUI_ICON "..\icon.ico"
 !define MUI_UNICON "..\icon.ico"
@@ -76,6 +85,7 @@ ManifestDPIAware true
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
 !insertmacro MUI_PAGE_DIRECTORY # In which folder install page.
+Page custom StoragePage StoragePageLeave
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
 
@@ -98,6 +108,104 @@ ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
    !insertmacro wails.checkArchitecture
+   SetRegView 64
+   ReadRegStr $DatabaseDirectory HKCU "${FITTRACK_STORAGE_KEY}" "DatabaseDirectory"
+   ReadRegStr $BackupDirectory HKCU "${FITTRACK_STORAGE_KEY}" "BackupDirectory"
+FunctionEnd
+
+!macro FitTrackStorageField label top field value callback
+    ${NSD_CreateLabel} 0 ${top}u 100% 10u "${label}"
+    Pop $0
+    !define /math fieldTop ${top} + 11
+    ${NSD_CreateText} 0 ${fieldTop}u 77% 13u "${value}"
+    Pop ${field}
+    ${NSD_CreateBrowseButton} 79% ${fieldTop}u 21% 13u "Browse..."
+    Pop $0
+    ${NSD_OnClick} $0 ${callback}
+    !undef fieldTop
+!macroend
+
+Function StoragePage
+    !insertmacro MUI_HEADER_TEXT "FitTrack storage" "Choose where FitTrack keeps your data."
+    nsDialogs::Create 1018
+    Pop $0
+    ${If} $0 == error
+        Abort
+    ${EndIf}
+
+    ${NSD_CreateLabel} 0 0 100% 25u "Leave folders blank to use the defaults. Choosing a different database folder leaves any existing database in its current folder."
+    Pop $0
+    !insertmacro FitTrackStorageField "Database folder (default: Local AppData\FitTrack)" 29 $DatabaseField $DatabaseDirectory BrowseDatabase
+    !insertmacro FitTrackStorageField "Backup folder (default: backups inside the database folder)" 59 $BackupField $BackupDirectory BrowseBackups
+    !insertmacro FitTrackStorageField "Restore from a FitTrack backup on first launch (optional)" 89 $RestoreField $RestoreSource BrowseRestore
+    nsDialogs::Show
+FunctionEnd
+
+Function BrowseDatabase
+    ${NSD_GetText} $DatabaseField $0
+    nsDialogs::SelectFolderDialog "Choose the database folder" "$0"
+    Pop $0
+    ${If} $0 != error
+        ${NSD_SetText} $DatabaseField "$0"
+    ${EndIf}
+FunctionEnd
+
+Function BrowseBackups
+    ${NSD_GetText} $BackupField $0
+    nsDialogs::SelectFolderDialog "Choose the backup folder" "$0"
+    Pop $0
+    ${If} $0 != error
+        ${NSD_SetText} $BackupField "$0"
+    ${EndIf}
+FunctionEnd
+
+Function BrowseRestore
+    nsDialogs::SelectFileDialog open "" "FitTrack backups|*.sqlite3"
+    Pop $0
+    ${If} $0 != error
+        ${NSD_SetText} $RestoreField "$0"
+    ${EndIf}
+FunctionEnd
+
+!macro FitTrackCheckPath value label
+    ${If} ${value} != ""
+        System::Call 'shlwapi::PathIsRelativeW(w "${value}") i.r0'
+        StrCpy $1 "${value}" 2
+        StrCpy $2 "${value}" 1 2
+        ${If} $0 != 0
+            MessageBox MB_OK|MB_ICONEXCLAMATION "Enter a full path for the ${label} or use Browse."
+            Abort
+        ${EndIf}
+        ${If} $1 != "\\"
+            StrCpy $1 "${value}" 1 1
+            ${If} $1 != ":"
+                StrCpy $2 ""
+            ${EndIf}
+            ${If} $2 != "\"
+            ${AndIf} $2 != "/"
+                MessageBox MB_OK|MB_ICONEXCLAMATION "Enter a full path for the ${label} or use Browse."
+                Abort
+            ${EndIf}
+        ${EndIf}
+    ${EndIf}
+!macroend
+
+Function StoragePageLeave
+    ${NSD_GetText} $DatabaseField $DatabaseDirectory
+    ${NSD_GetText} $BackupField $BackupDirectory
+    ${NSD_GetText} $RestoreField $RestoreSource
+    !insertmacro FitTrackCheckPath $DatabaseDirectory "database folder"
+    !insertmacro FitTrackCheckPath $BackupDirectory "backup folder"
+    !insertmacro FitTrackCheckPath $RestoreSource "restore file"
+
+    ${If} $RestoreSource != ""
+        ${IfNot} ${FileExists} "$RestoreSource"
+            MessageBox MB_OK|MB_ICONEXCLAMATION "Choose an existing FitTrack backup file."
+            Abort
+        ${EndIf}
+        MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "On first launch, FitTrack will replace any records and preferences in the selected database with this backup." IDOK +2
+        Abort
+    ${EndIf}
 FunctionEnd
 
 Section
@@ -116,6 +224,19 @@ Section
     !insertmacro wails.associateCustomProtocols
     
     !insertmacro wails.writeUninstaller
+
+    ${IfNot} ${Silent}
+        SetRegView 64
+        ClearErrors
+        WriteRegStr HKCU "${FITTRACK_STORAGE_KEY}" "DatabaseDirectory" "$DatabaseDirectory"
+        WriteRegStr HKCU "${FITTRACK_STORAGE_KEY}" "BackupDirectory" "$BackupDirectory"
+        WriteRegStr HKCU "${FITTRACK_STORAGE_KEY}" "RestoreSource" "$RestoreSource"
+        ${If} ${Errors}
+            MessageBox MB_OK|MB_ICONSTOP "FitTrack could not save the selected storage settings."
+            SetErrorLevel 3
+            Abort
+        ${EndIf}
+    ${EndIf}
 SectionEnd
 
 Section "uninstall" 

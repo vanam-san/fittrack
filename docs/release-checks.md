@@ -22,7 +22,9 @@ Start with `v1.0.0` and use stable `vMAJOR.MINOR.PATCH` tags.
 | Backward-compatible feature | Increase minor and reset patch to zero | `v1.0.0` → `v1.1.0` |
 | Backward-compatible fix | Increase patch | `v1.1.0` → `v1.1.1` |
 
-After completing release acceptance, tag the release commit and push the tag:
+Before tagging, commit the release notes to `docs/releases/<tag>.md` with
+`## Added` and `## Changed` sections. After completing release acceptance, tag
+the release commit and push the tag:
 
 ```sh
 git tag -a v1.0.0 -m "FitTrack v1.0.0"
@@ -30,9 +32,9 @@ git push origin refs/tags/v1.0.0
 ```
 
 GitHub Actions checks the tag format and uses its version in the package metadata.
-When all three platform jobs pass, it publishes the GitHub Release with generated
-notes, the Windows x64 installer and standalone executable, the macOS universal
-disk image, and the Debian amd64 installer. Branch builds and pull requests
+When all three platform jobs pass, it publishes the GitHub Release with the
+notes from the tagged commit, the Windows x64 installer and standalone executable,
+the macOS universal disk image, and the Debian amd64 installer. Branch builds and pull requests
 continue to upload workflow artifacts.
 
 Use the **Native release** run for the tag to check each platform job and the
