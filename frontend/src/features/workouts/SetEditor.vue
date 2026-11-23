@@ -19,6 +19,8 @@ const dirty = computed(() =>
   }),
 )
 
+// The parent reloads every set after a save. Keep local edits in rows whose
+// persisted fields are identical across those responses.
 watch(
   () => props.set,
   (saved, previous) => {

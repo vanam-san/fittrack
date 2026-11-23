@@ -92,6 +92,7 @@ function replace() {
   pending.value = undefined
   return run(async () => {
     const checkpoint = await Replace(selected.operation, selected.path)
+    // The replacement may contain different settings or require first-run setup.
     await props.reload()
     const result =
       selected.operation === 'restore'

@@ -119,6 +119,8 @@ func (s *Service) Report(ctx context.Context, from, to, grouping string) (Report
 }
 
 func splitPeriods(start, end time.Time, grouping string) ([]Period, error) {
+	// Keep calendar boundaries for complete periods and clip the first and last
+	// periods to the requested range.
 	var nextBoundary func(time.Time) time.Time
 	switch grouping {
 	case "daily":
@@ -188,6 +190,8 @@ func (r Report) addNutrition(rows []dbquery.ReportFoodLogsRow) {
 }
 
 func (r Report) addExercises(rows []dbquery.ReportCompletedSetsRow) []Exercise {
+	// The query sorts sets by date. Each exercise's final day can collect
+	// sets from multiple sessions on that date.
 	byID := make(map[int64]*Exercise)
 	for _, row := range rows {
 		exercise := byID[row.ExerciseID]

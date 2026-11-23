@@ -152,6 +152,8 @@ func (s *Service) SaveEntry(ctx context.Context, entry Entry) (int64, error) {
 	return entry.ID, requireRow(count, err, "That food entry is no longer available.")
 }
 
+// LogPreset copies the current per-serving values into the journal entry so
+// later preset edits do not change historical nutrition totals.
 func (s *Service) LogPreset(ctx context.Context, id int64, placement LogPlacement) (int64, error) {
 	if err := validatePlacement(placement); err != nil {
 		return 0, err

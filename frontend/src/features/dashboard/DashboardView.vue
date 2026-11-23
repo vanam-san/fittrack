@@ -32,6 +32,7 @@ const today = new Intl.DateTimeFormat(undefined, {
 }).format(now)
 
 onMounted(async () => {
+  // Each card can still show its data if one of the other services fails.
   const [journal, training, measurements] = await Promise.allSettled([
     Promise.resolve().then(() => loadNutritionDay(localDate(now))),
     Promise.resolve().then(() => loadWorkouts(props.preferences.weightUnit)),

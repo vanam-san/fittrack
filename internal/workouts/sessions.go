@@ -11,6 +11,8 @@ import (
 	"github.com/vanam-san/fittrack/internal/units"
 )
 
+// Start snapshots the plan and creates draft sets in the same transaction.
+// Subsequent edits to the routine do not change this session.
 func (s *Service) Start(ctx context.Context, routineID int64) (int64, error) {
 	var id int64
 	err := s.transaction(ctx, func(q *dbquery.Queries) error {
@@ -74,6 +76,8 @@ func (s *Service) Session(ctx context.Context, id int64, unit string) (Session, 
 }
 
 func summarize(row dbquery.WorkoutSession, now int64) SessionSummary {
+	// ElapsedMs holds prior active intervals. Only an active session has an
+	// unfinished interval to add.
 	elapsed := row.ElapsedMs
 	if row.Status == "active" {
 		elapsed += max(0, now-row.ResumedAt)
@@ -149,6 +153,7 @@ func (s *Service) ChangeStatus(ctx context.Context, id int64, target string) err
 		case target == row.Status:
 			return nil
 		case target == "paused" && row.Status == "active":
+			// Store a remaining duration while paused. Resume gives it a new deadline.
 			update.PausedRestMs = max(0, row.RestUntil-now)
 		case target == "active" && row.Status == "paused":
 			update.ResumedAt = now
@@ -218,6 +223,7 @@ func (s *Service) SaveSet(ctx context.Context, sessionID, exerciseID, setID int6
 		if err := q.UpdateWorkoutSet(ctx, update); err != nil {
 			return err
 		}
+		// Only the transition from draft to logged starts a new rest interval.
 		if input.Done && set.Done == 0 && exercise.RestSeconds > 0 {
 			return q.UpdateRestTimer(ctx, dbquery.UpdateRestTimerParams{
 				ID: sessionID, RestUntil: s.now().UnixMilli() + exercise.RestSeconds*1000,

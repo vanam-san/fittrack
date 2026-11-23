@@ -16,6 +16,7 @@ const emit = defineEmits<{
 }>()
 const now = ref(Date.now())
 const loadedAt = ref(now.value)
+// The service owns persisted timestamps. This clock refreshes the display between responses.
 let interval: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
   interval = setInterval(() => {

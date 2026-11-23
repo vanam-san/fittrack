@@ -24,6 +24,8 @@ func Open(ctx context.Context, path string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
+	// Serialize database access, including operations that hold a connection
+	// between taking a recovery snapshot and replacing its contents.
 	db.SetMaxOpenConns(1)
 	if err := migrate(ctx, db); err != nil {
 		db.Close()

@@ -57,6 +57,7 @@ func run() error {
 		services = append(services, application.NewService(desktop.NewAnalyticsService(analytics.NewService(db))))
 		services = append(services, application.NewService(desktop.NewDataFilesService(database.NewDataFiles(db, path), path)))
 	}
+	// Keep Settings available so the UI can report a storage startup failure.
 	services = append(services, application.NewService(desktop.NewSettingsService(preferences, path)))
 
 	app := application.New(application.Options{

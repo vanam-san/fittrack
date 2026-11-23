@@ -44,6 +44,7 @@ func (s *DataFilesService) Backup(ctx context.Context) (string, error) {
 	return path, s.files.Backup(ctx, path)
 }
 
+// ChooseInput only selects a path. The UI asks for confirmation before calling Replace.
 func (s *DataFilesService) ChooseInput(operation string) (string, error) {
 	app := application.Get()
 	dialog := app.Dialog.OpenFile().AttachToWindow(app.Window.Current()).CanChooseFiles(true)

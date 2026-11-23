@@ -31,6 +31,7 @@ func (d *DataFiles) Export(ctx context.Context, path, format string) error {
 	if err := d.checkPath(path); err != nil {
 		return err
 	}
+	// Read linked tables from one snapshot, then write the file outside the transaction.
 	tx, err := d.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return err
@@ -74,6 +75,8 @@ func (d *DataFiles) Import(ctx context.Context, path string) (string, error) {
 		return "", err
 	}
 	defer conn.Close()
+	// Keep the same connection through the checkpoint and replacement so other
+	// operations in this instance cannot write between them.
 	checkpoint, err := d.checkpoint(ctx, conn, "pre-import")
 	if err != nil {
 		return "", fmt.Errorf("save recovery backup: %w", err)
@@ -109,6 +112,7 @@ func (d *DataFiles) Restore(ctx context.Context, path string) (string, error) {
 		return "", err
 	}
 
+	// Migrate and validate a staged copy so the original backup stays reusable.
 	stage, err := os.CreateTemp(filepath.Dir(d.path), ".restore-*.sqlite3")
 	if err != nil {
 		return "", err

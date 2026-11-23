@@ -6,6 +6,7 @@ import { formatDate, localDate } from '@/lib/format'
 defineProps<{ workoutDates: Set<string>; busy: boolean }>()
 const selected = defineModel<string>({ required: true })
 const today = localDate()
+// Build the month in local time to match the date keys stored with sessions.
 const initial = new Date(`${selected.value || today}T12:00:00`)
 const month = ref(new Date(initial.getFullYear(), initial.getMonth(), 1, 12))
 const monthLabel = computed(() =>

@@ -115,6 +115,7 @@ function edit(measurement?: Measurement) {
 }
 
 function recordValue(value: string, currentKg?: number | null) {
+  // An unchanged display value should keep its original kilogram precision.
   if (currentKg != null && Number(value) === Number(inputWeight(currentKg))) {
     return { weight: currentKg, unit: 'kg' }
   }

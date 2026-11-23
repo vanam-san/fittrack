@@ -205,6 +205,7 @@ function updateLive(action: (id: number) => Promise<void>) {
   const id = current.active.id
   void run(async () => {
     await action(id)
+    // Reload rest and set state from storage after the mutation succeeds.
     current.active = await loadWorkoutSession(id, props.weightUnit)
   })
 }

@@ -102,11 +102,13 @@ async function navigate(next: typeof page.value) {
   page.value = next
   saveError.value = ''
   saved.value = false
+  // Focus the newly rendered page so keyboard navigation begins in its content.
   await nextTick()
   main.value?.focus()
 }
 
 async function reloadAfterReplacement() {
+  // Import and restore can replace preferences and first-run state.
   page.value = 'settings'
   saveError.value = ''
   saved.value = false

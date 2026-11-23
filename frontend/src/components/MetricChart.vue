@@ -157,6 +157,7 @@ function disconnect() {
 }
 
 function observePlot() {
+  // Empty states can replace the plot element, so dispose its old chart and observers.
   disconnect()
   if (!plot.value) return
   resize = new ResizeObserver(() => {
