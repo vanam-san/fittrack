@@ -1,0 +1,4 @@
+# Managed by the Sync CODEOWNERS workflow.
+# Contributors with repository write access are included in the default rule.
+* @vanam-san
+/.github/ @vanam-san

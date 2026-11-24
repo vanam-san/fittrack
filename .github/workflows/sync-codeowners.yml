@@ -1,0 +1,67 @@
+name: Sync CODEOWNERS
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-codeowners
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Refresh contributor ownership
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          branch=master
+          path=.github/CODEOWNERS
+
+          contributors=$(gh api --paginate "repos/$GH_REPO/commits?sha=$branch&per_page=100" \
+            --jq '.[] | select(.author.type == "User") | .author.login | ascii_downcase' | LC_ALL=C sort -u)
+          collaborators=$(gh api --paginate "repos/$GH_REPO/collaborators?per_page=100" \
+            --jq '.[] | select(.permissions.push or .permissions.maintain or .permissions.admin) | .login | ascii_downcase')
+
+          owners=("@$REPOSITORY_OWNER")
+          credited=()
+          while IFS= read -r login; do
+            if [[ ! $login =~ ^[a-z0-9][a-z0-9-]{0,38}$ || $login == "${REPOSITORY_OWNER,,}" ]]; then
+              continue
+            fi
+            if grep -Fxq -- "$login" <<< "$collaborators"; then
+              owners+=("@$login")
+            else
+              credited+=("@$login")
+            fi
+          done <<< "$contributors"
+
+          {
+            echo '# Managed by the Sync CODEOWNERS workflow.'
+            echo '# Contributors with repository write access are included in the default rule.'
+            if (( ${#credited[@]} )); then
+              printf '# Contributor: %s\n' "${credited[@]}"
+            fi
+            printf '* %s\n' "${owners[*]}"
+            printf '/.github/ @%s\n' "$REPOSITORY_OWNER"
+          } > "$RUNNER_TEMP/CODEOWNERS"
+
+          file="repos/$GH_REPO/contents/$path"
+          current=$(gh api "$file?ref=$branch")
+          sha=$(jq -r '.sha' <<< "$current")
+          jq -r .content <<< "$current" | base64 --decode > "$RUNNER_TEMP/CODEOWNERS.current"
+          if cmp -s "$RUNNER_TEMP/CODEOWNERS" "$RUNNER_TEMP/CODEOWNERS.current"; then
+            exit 0
+          fi
+          gh api --method PUT "$file" \
+            -f branch="$branch" -f sha="$sha" \
+            -f message='chore: sync code owners' \
+            -f content="$(base64 -w0 "$RUNNER_TEMP/CODEOWNERS")" --silent
