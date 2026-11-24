@@ -167,7 +167,11 @@ jobs:
       - name: Set package version from release tag
         if: github.ref_type == 'tag'
         run: node scripts/set-release-version.mjs "$GITHUB_REF_NAME"
-      - name: Install Android tools
+      - name: Set up Android SDK command-line tools
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
+        with:
+          log-accepted-android-sdk-licenses: 'false'
+      - name: Install Android platform, build tools, and NDK
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;29.0.14206865"
       - name: Install Wails
         run: |
