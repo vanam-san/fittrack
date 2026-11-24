@@ -10,8 +10,6 @@ import (
 	"slices"
 	"strings"
 	"time"
-
-	"modernc.org/sqlite"
 )
 
 type DataFiles struct {
@@ -144,7 +142,7 @@ func (d *DataFiles) Restore(ctx context.Context, path string) (string, error) {
 }
 
 func stageBackup(ctx context.Context, path, stage string) (*sql.DB, error) {
-	source, err := sql.Open("sqlite", sqliteURI(path, "mode=ro&_pragma=trusted_schema(OFF)&_pragma=busy_timeout(5000)"))
+	source, err := sql.Open("sqlite", sqliteURI(path, sqliteReadOnlyQuery))
 	if err != nil {
 		return nil, err
 	}
@@ -248,40 +246,21 @@ func backupFile(ctx context.Context, conn *sql.Conn, path string) error {
 		if err := file.Close(); err != nil {
 			return err
 		}
-		return copyDatabase(ctx, conn, sqliteURI(stage, "mode=rw&_pragma=synchronous(FULL)"), false)
+		return copyDatabase(ctx, conn, sqliteURI(stage, sqliteSnapshotQuery), false)
 	})
 }
 
-func copyDatabase(ctx context.Context, conn *sql.Conn, uri string, restore bool) error {
-	return conn.Raw(func(raw any) (result error) {
-		driver, ok := raw.(interface {
-			NewBackup(string) (*sqlite.Backup, error)
-			NewRestore(string) (*sqlite.Backup, error)
-		})
-		if !ok {
-			return fmt.Errorf("SQLite backup is unavailable")
-		}
-		var backup *sqlite.Backup
-		var err error
-		if restore {
-			backup, err = driver.NewRestore(uri)
-		} else {
-			backup, err = driver.NewBackup(uri)
-		}
-		if err != nil {
+func runBackup(ctx context.Context, step func(int) (bool, error), finish func() error) (result error) {
+	defer func() { result = errors.Join(result, finish()) }()
+	for {
+		if err := ctx.Err(); err != nil {
 			return err
 		}
-		defer func() { result = errors.Join(result, backup.Finish()) }()
-		for {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-			more, err := backup.Step(256)
-			if err != nil || !more {
-				return err
-			}
+		done, err := step(256)
+		if err != nil || done {
+			return err
 		}
-	})
+	}
 }
 
 func writeFile(path string, write func(*os.File) error) error {

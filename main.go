@@ -41,7 +41,7 @@ func run() error {
 	var db *sql.DB
 	var preferences *settings.Service
 	services := []application.Service{}
-	storage, err := config.StoragePaths()
+	storage, err := storagePaths()
 	var restoreError string
 	if err == nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

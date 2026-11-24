@@ -3,6 +3,7 @@ module github.com/vanam-san/fittrack
 go 1.26.0
 
 require (
+	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/wailsapp/wails/v3 v3.1.0
 	golang.org/x/sys v0.49.0
 	modernc.org/sqlite v1.63.0

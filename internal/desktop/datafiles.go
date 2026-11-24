@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -29,7 +30,7 @@ func (s *DataFilesService) Export(ctx context.Context, format string) (string, e
 	if err != nil || path == "" {
 		return "", err
 	}
-	return path, s.files.Export(ctx, path, format)
+	return finishExport(path, s.files.Export(ctx, path, format))
 }
 
 func (s *DataFilesService) Backup(ctx context.Context) (string, error) {
@@ -41,7 +42,7 @@ func (s *DataFilesService) Backup(ctx context.Context) (string, error) {
 	if err != nil || path == "" {
 		return "", err
 	}
-	return path, s.files.Backup(ctx, path)
+	return finishExport(path, s.files.Backup(ctx, path))
 }
 
 // ChooseInput only selects a path. The UI asks for confirmation before calling Replace.
@@ -78,6 +79,19 @@ func (s *DataFilesService) Replace(ctx context.Context, operation, path string) 
 }
 
 func (s *DataFilesService) saveDialog(dir, filename, label, extension string) (string, error) {
+	if runtime.GOOS == "android" {
+		// The Android document picker returns a content URI. Stage the snapshot
+		// privately so the Android host can copy it to that URI.
+		root := filepath.Join(filepath.Dir(s.backupDir), "exports")
+		if err := os.MkdirAll(root, 0700); err != nil {
+			return "", err
+		}
+		stage, err := os.MkdirTemp(root, "export-")
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(stage, filename), nil
+	}
 	app := application.Get()
 	dialog := app.Dialog.SaveFile().AttachToWindow(app.Window.Current()).
 		SetFilename(filename).CanCreateDirectories(true).AddFilter(label, "*."+extension)
@@ -92,6 +106,13 @@ func (s *DataFilesService) saveDialog(dir, filename, label, extension string) (s
 		return "", fmt.Errorf("save the file with the .%s extension", extension)
 	}
 	return path, nil
+}
+
+func finishExport(path string, err error) (string, error) {
+	if err != nil && runtime.GOOS == "android" {
+		_ = os.Remove(filepath.Dir(path))
+	}
+	return path, err
 }
 
 func isDirectory(path string) bool {
