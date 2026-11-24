@@ -57,36 +57,19 @@ node scripts/smoke-windows.mjs
 
 ## Local data
 
-On desktop, **Settings → Data and recovery** shows the database and backup locations. You can export and import CSV or JSON, create a SQLite backup, and restore a validated backup.
-
-On Android, open **Settings → Data and recovery → Export backup** and choose a location on the device. To bring your data back, select **Restore backup**, choose the `.sqlite3` file, and confirm. Restore replaces your records and preferences after validation and saves a recovery snapshot in private app storage. Android and desktop use the same SQLite backup format.
+**Settings → Data and recovery** shows the database and backup locations. You can export and import CSV or JSON, create a SQLite backup, and restore a validated backup.
 
 See the [documentation index](docs/README.md) for installation, data recovery, architecture, and releases.
 
-## Android APK
+## Future scope
 
-Download the signed `FitTrack-1.4.1-Android.apk` from the [FitTrack v1.4.1 release](https://github.com/vanam-san/fittrack/releases/tag/v1.4.1). See the [user guide](docs/user-guide.md#install-and-run-offline) for installation and upgrade steps.
-
-| Exercise library | Backup and recovery |
-| --- | --- |
-| [![FitTrack exercise library on Android](docs/screenshots/v1.4.1/FitTrack-Android-Workouts.png)](docs/screenshots/v1.4.1/FitTrack-Android-Workouts.png) | [![FitTrack data and recovery settings on Android](docs/screenshots/v1.4.1/FitTrack-Android-Settings.png)](docs/screenshots/v1.4.1/FitTrack-Android-Settings.png) |
-
-The APK supports Android 8.0 and later on ARM64 and x86-64 with an up-to-date Android System WebView. The interface and database work offline. FitTrack stores data in private app storage, disables Android cloud backup for it, and uses the system document picker for manual file transfers. Save backups outside the app before uninstalling.
-
-Install JDK 21, Android SDK platform and build tools 36, and NDK `29.0.14206865`, in addition to the development tools above. Set `ANDROID_HOME` to the SDK directory and run from the repository root.
-
-```sh
-bun install --cwd frontend --frozen-lockfile
-node scripts/build-android.mjs
-```
-
-The build writes `bin/FitTrack-<version>-Android.apk`. Local builds use a debug key unless you set `ANDROID_KEYSTORE_FILE`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`. Tagged GitHub releases require the same alias and password secrets and a base64-encoded keystore in `ANDROID_KEYSTORE_BASE64`. Keep the same key for future APK updates.
+Mobile support is planned for a future release.
 
 ## Credits
 
 - FitTrack started from [Wails Vue Tailwind TypeScript](https://github.com/vanam-san/wails-template-vue-tailwind) v1.1.0.
 - James Gay’s [FitNotes](https://play.google.com/store/apps/details?id=com.github.jamesgay.fitnotes) inspired the workout calendar, history navigation, and quick exercise entry.
-- FitTrack uses [Wails](https://wails.io/) and [Go](https://go.dev/). Local storage uses [SQLite](https://sqlite.org/) and [sqlc](https://sqlc.dev/), with [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite) on desktop and [go-sqlite3](https://github.com/mattn/go-sqlite3) on Android.
+- FitTrack uses [Wails](https://wails.io/) and [Go](https://go.dev/). Local storage uses [SQLite](https://sqlite.org/) and [sqlc](https://sqlc.dev/), with [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite).
 - The interface uses [Vue](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vite.dev/), [Tailwind CSS](https://tailwindcss.com/), [shadcn-vue](https://www.shadcn-vue.com/), [Lucide](https://lucide.dev/), and [Apache ECharts](https://echarts.apache.org/). [Bun](https://bun.sh/) manages frontend dependencies and [Vitest](https://vitest.dev/) runs frontend tests.
 
 ## Contributing and license

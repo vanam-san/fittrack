@@ -8,7 +8,6 @@
 | Windows x64 executable | With the same prerequisites, keep the executable in a writable folder and open it directly. It shares the usual FitTrack data directory for the Windows account. |
 | macOS universal disk image | Use macOS 12 or newer on Apple Silicon or Intel. Open the disk image, drag FitTrack to Applications, and open it there. For distribution outside development, use a signed and notarized disk image. |
 | Linux amd64 Debian package | Use Ubuntu 24.04 or Debian 13 with GTK 4 and WebKitGTK 6.0 installed. Install with `sudo dpkg -i ./fittrack.deb` and launch FitTrack from the applications menu. Place the package and any missing dependency packages on the machine before disconnecting. [Wails platform prerequisites](https://v3.wails.io/quick-start/installation/) |
-| Android APK | Use Android 8.0 or later on ARM64 or x86-64 with an up-to-date Android System WebView. Download the signed APK from [GitHub Releases](https://github.com/vanam-san/fittrack/releases/latest), open it on the device, and allow installation from that source if Android prompts you. |
 
 Setup, logging, analytics, export, import, and recovery work from the installed app with the network disconnected. On first launch, set your preferences or open **Data and recovery** on the setup screen to import records or restore a backup.
 
@@ -38,8 +37,6 @@ On desktop, open **Settings → Data and recovery** for the exact paths. The act
 
 **Create backup** starts in the configured backup folder and lets you choose a different destination. FitTrack shows the saved path when it finishes. Copy an important backup to a separate drive to recover after a device or disk failure.
 
-On Android, FitTrack keeps the database in private app storage and disables automatic cloud backup. Use **Settings → Data and recovery → Export backup** to save a SQLite snapshot through Android's file picker. You can restore a compatible snapshot from either Android or desktop.
-
 ## Transfer records between installations
 
 1. On the old installation, choose **Export CSV** or **Export JSON** and save the file.
@@ -57,7 +54,5 @@ Keep the original export for transfer. Spreadsheet apps can change text, dates, 
 3. FitTrack validates the backup, prepares supported older backups for this version, and saves a `pre-restore-*.sqlite3` copy of the current database in the configured backup folder. Restore replaces current records and preferences. If a restore fails during replacement, the existing database and its recovery copy remain available.
 
 Close FitTrack before upgrading or uninstalling. On Windows, run the newer installer with the same install scope or replace the portable executable. On macOS, replace the Applications bundle. On Linux, install the newer Debian package over the existing one. A desktop reinstall can reuse your database and backups in their existing folders.
-
-On Android, install a newer APK signed with the same key over the existing app to keep your data. Export a backup to a location such as Downloads before uninstalling, since Android removes private app data on uninstall.
 
 If FitTrack cannot open the current database, quit all FitTrack windows. Move the data directory to a separate recovery location so the original database, sidecar files, and backups stay together. Relaunch FitTrack to create a fresh database, then restore a known-good backup from the moved folder or a separate drive. If FitTrack reports a newer backup schema, use the same or a newer FitTrack release than the one that created it.

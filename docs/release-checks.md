@@ -9,9 +9,8 @@ Build with the dependencies in the README and the platform tools below. Run each
 | Windows x64 with NSIS on PATH | `wails3 package INSTALL_SCOPE=user` | `bin/FitTrack-amd64-installer.exe` and the standalone `bin/fittrack.exe` |
 | macOS with Xcode command-line tools | `wails3 task darwin:package:universal`, then `wails3 task darwin:create:dmg` | Disk image under `bin/` |
 | Linux amd64 with GTK 4 and WebKitGTK 6.0 development headers | `wails3 task linux:create:deb` | Debian package under `bin/` |
-| Android with JDK 21, Android SDK 36, and NDK 29 | `node scripts/build-android.mjs` | `bin/FitTrack-<version>-Android.apk` for ARM64 and x86-64 |
 
-The [native workflow](../.github/workflows/native-release.yml) builds the desktop installers and the Android APK. It runs Go and frontend checks for the desktop builds, tests Windows installer lifecycle and WebView workflows, verifies and launches the universal macOS bundle, and checks the Debian installer and app launch in a network namespace. The Android job verifies the APK signature, both architectures, and the absence of internet permission.
+The [native workflow](../.github/workflows/native-release.yml) builds the desktop installers. It runs Go and frontend checks for the desktop builds, tests Windows installer lifecycle and WebView workflows, verifies and launches the universal macOS bundle, and checks the Debian installer and app launch in a network namespace.
 
 ## Publish a release
 
@@ -23,9 +22,8 @@ Start with `v1.0.0` and use stable `vMAJOR.MINOR.PATCH` tags.
 | Backward-compatible feature | Increase minor and reset patch to zero | `v1.0.0` → `v1.1.0` |
 | Backward-compatible fix | Increase patch | `v1.1.0` → `v1.1.1` |
 
-Before tagging, configure the Android release signing secrets described in the
-[README](../README.md#android-apk) and commit the release notes to `docs/releases/<tag>.md` with
-`## Added` and `## Changed` sections. After completing release acceptance, tag
+Before tagging, commit the release notes to `docs/releases/<tag>.md` using
+`## Added` and `## Changed` sections as applicable. After completing release acceptance, tag
 the release commit and push the tag:
 
 ```sh
@@ -36,15 +34,14 @@ git push origin refs/tags/v1.0.0
 GitHub Actions checks the tag format and uses its version in the package metadata.
 When all platform jobs pass, it publishes the GitHub Release with the
 notes from the tagged commit, the Windows x64 installer and standalone executable,
-the macOS universal disk image, the Debian amd64 installer, and the Android APK. Branch builds and pull requests
+the macOS universal disk image, and the Debian amd64 installer. Branch builds and pull requests
 continue to upload workflow artifacts.
 
-To attach Android screenshots, place `FitTrack-Android-*.png` files under
-`docs/screenshots/<tag>/` in the tagged commit. The publish job uploads them
-alongside the packages.
+The publish job attaches the PNG screenshots from `docs/screenshots/` alongside
+the packages.
 
 Use the **Native release** run for the tag to check each platform job and the
-final publish job. Once it succeeds, open the release page and check that all five
+final publish job. Once it succeeds, open the release page and check that all four
 package downloads and any screenshots are listed. Keep the published tag attached to its original commit.
 If a published build needs a fix, use the next patch tag.
 

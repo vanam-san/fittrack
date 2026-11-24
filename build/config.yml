@@ -11,7 +11,7 @@ info:
   description: "Offline fitness tracking"
   copyright: "Copyright FitTrack contributors"
   comments: ""
-  version: "0.2.0"
+  version: "1.5.0"
 
 # iOS build configuration (uncomment to customise iOS project generation)
 # Note: Keys under `ios` OVERRIDE values under `info` when set.

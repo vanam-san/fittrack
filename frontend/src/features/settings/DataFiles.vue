@@ -2,7 +2,6 @@
 import { computed, nextTick, ref } from 'vue'
 import ConfirmAction from '@/components/ConfirmAction.vue'
 import { Button } from '@/components/ui/button'
-import { androidFiles, pickAndroidDocument } from './androidFiles'
 import {
   Backup,
   ChooseInput,
@@ -63,12 +62,7 @@ function exportRecords(event: MouseEvent, format: 'csv' | 'json') {
   return run(async () => {
     const path = await Export(format)
     if (!path) return
-    if (androidFiles) {
-      if (await pickAndroidDocument('save', path))
-        message.value = 'Records exported.'
-    } else {
-      message.value = `Exported to ${path}.`
-    }
+    message.value = `Exported to ${path}.`
   })
 }
 
@@ -77,27 +71,19 @@ function createBackup(event: MouseEvent) {
   return run(async () => {
     const path = await Backup()
     if (!path) return
-    if (androidFiles) {
-      if (await pickAndroidDocument('save', path))
-        message.value = 'Backup exported.'
-    } else {
-      message.value = `Backup saved to ${path}.`
-    }
+    message.value = `Backup saved to ${path}.`
   })
 }
 
 function choose(event: MouseEvent, operation: Replacement) {
   trigger = event.currentTarget as HTMLButtonElement
   return run(async () => {
-    const path = androidFiles
-      ? await pickAndroidDocument('open')
-      : await ChooseInput(operation)
+    const path = await ChooseInput(operation)
     if (path) pending.value = { operation, path }
   })
 }
 
 function cancel() {
-  if (pending.value) androidFiles?.discard(pending.value.path)
   pending.value = undefined
   void refocus()
 }
@@ -107,21 +93,14 @@ function replace() {
   if (!selected) return
   pending.value = undefined
   return run(async () => {
-    let checkpoint: string
-    try {
-      checkpoint = await Replace(selected.operation, selected.path)
-    } finally {
-      androidFiles?.discard(selected.path)
-    }
+    const checkpoint = await Replace(selected.operation, selected.path)
     // The replacement may contain different settings or require first-run setup.
     await props.reload()
     const result =
       selected.operation === 'restore'
         ? 'Backup restored.'
         : 'Records imported.'
-    message.value = androidFiles
-      ? `${result} A recovery backup was saved in private app storage.`
-      : `${result} Recovery backup saved to ${checkpoint}.`
+    message.value = `${result} Recovery backup saved to ${checkpoint}.`
   })
 }
 </script>
@@ -133,7 +112,7 @@ function replace() {
     :aria-busy="busy"
   >
     <h2 id="storage-title" class="font-semibold">Data and recovery</h2>
-    <dl v-if="!androidFiles" class="space-y-3 text-sm">
+    <dl class="space-y-3 text-sm">
       <div>
         <dt class="font-medium">Local database</dt>
         <dd>
@@ -184,7 +163,7 @@ function replace() {
         :disabled="busy || saving"
         @click="createBackup"
       >
-        {{ androidFiles ? 'Export backup' : 'Create backup' }}
+        Create backup
       </Button>
       <Button
         type="button"

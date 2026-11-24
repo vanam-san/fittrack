@@ -1,5 +1,3 @@
-//go:build !android
-
 package main
 
 import "github.com/vanam-san/fittrack/internal/config"
