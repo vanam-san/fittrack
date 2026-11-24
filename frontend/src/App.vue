@@ -107,7 +107,8 @@ async function navigate(next: typeof page.value) {
   saved.value = false
   // Focus the newly rendered page so keyboard navigation begins in its content.
   await nextTick()
-  main.value?.focus()
+  main.value?.focus({ preventScroll: true })
+  window.scrollTo(0, 0)
 }
 
 async function reloadAfterReplacement() {
@@ -127,7 +128,7 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
 </script>
 
 <template>
-  <div class="min-h-screen md:flex">
+  <div class="min-h-screen lg:flex">
     <aside class="fit-sidebar">
       <div class="flex items-center gap-3 font-semibold tracking-tight">
         <img :src="brandIcon" alt="" width="36" height="36" />
@@ -136,7 +137,7 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
       <nav
         v-if="state?.setupComplete"
         aria-label="Main navigation"
-        class="flex flex-wrap gap-1 md:flex-col"
+        class="fit-main-nav"
       >
         <button
           v-for="item in navigation"
@@ -147,7 +148,12 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
           :disabled="saving || dataBusy"
           @click="navigate(item.id)"
         >
-          <component :is="item.icon" :size="17" aria-hidden="true" />
+          <component
+            :is="item.icon"
+            :size="17"
+            class="shrink-0"
+            aria-hidden="true"
+          />
           {{ item.label }}
         </button>
       </nav>
@@ -156,7 +162,7 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
     <main
       ref="main"
       tabindex="-1"
-      class="mx-auto w-full min-w-0 max-w-6xl flex-1 p-5 outline-none sm:p-8 lg:p-12"
+      class="@container/main mx-auto w-full min-w-0 max-w-6xl flex-1 p-4 outline-none sm:p-6 xl:p-8"
     >
       <div v-if="loadError" class="fit-panel max-w-lg space-y-4">
         <h1 class="text-2xl font-semibold">Local storage unavailable</h1>
@@ -183,7 +189,7 @@ onUnmounted(() => systemTheme.removeEventListener('change', onSystemTheme))
         v-else-if="state.setupComplete && page === 'analytics'"
         :weight-unit="state.preferences.weightUnit"
       />
-      <div v-else class="max-w-2xl space-y-6">
+      <div v-else class="fit-page max-w-2xl">
         <header class="space-y-2">
           <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
             {{ state.setupComplete ? 'Settings' : 'Set up FitTrack' }}

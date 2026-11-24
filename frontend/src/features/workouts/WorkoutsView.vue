@@ -224,7 +224,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="fit-page">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
         Workouts
@@ -249,10 +249,7 @@ onMounted(load)
       >
     </div>
     <template v-else>
-      <nav
-        aria-label="Workout sections"
-        class="flex flex-wrap gap-1 border-b pb-2"
-      >
+      <nav aria-label="Workout sections" class="fit-sections">
         <Button
           v-for="item in sections"
           :key="item.key"
@@ -291,7 +288,7 @@ onMounted(load)
           Create a routine to plan exercises, sets, and rest before you start
           training.
         </p>
-        <ul v-else class="grid gap-3 xl:grid-cols-2">
+        <ul v-else class="grid gap-3 @min-[44rem]/main:grid-cols-2">
           <li
             v-for="routine in overview.routines"
             :key="routine.id"

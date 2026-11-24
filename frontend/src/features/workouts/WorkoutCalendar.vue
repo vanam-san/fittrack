@@ -70,6 +70,7 @@ function moveMonth(delta: number) {
         :key="day.date"
         type="button"
         size="sm"
+        class="h-9 w-full min-w-0 px-0"
         :variant="
           selected === day.date
             ? 'default'

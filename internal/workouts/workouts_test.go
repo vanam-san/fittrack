@@ -32,6 +32,13 @@ func TestWorkoutSurvivesRestartAndRoutineChanges(t *testing.T) {
 	if len(overview.Exercises) == 0 || !overview.Exercises[0].BuiltIn {
 		t.Fatal("expected a seeded exercise library")
 	}
+	for _, exercise := range overview.Exercises {
+		if exercise.BuiltIn && (exercise.Name == "" || exercise.PrimaryMuscle == "" ||
+			exercise.SecondaryMuscles == "" || exercise.Equipment == "" ||
+			exercise.Tracking == "" || exercise.Notes == "") {
+			t.Errorf("incomplete built-in exercise: %+v", exercise)
+		}
+	}
 	press, err := service.CreateExercise(ctx, ExerciseInput{
 		Name: "Custom Landmine Press", PrimaryMuscle: "Shoulders", Equipment: "Barbell", Tracking: "weight_reps",
 	})

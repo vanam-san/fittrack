@@ -196,6 +196,14 @@ func replaceRecords(ctx context.Context, tx *sql.Tx, data records) error {
 			return fmt.Errorf("%s: %w", table.name, err)
 		}
 	}
+	// Older portable exports can contain built-in exercises without instructions.
+	instructions, err := migrations.ReadFile("migrations/006_exercise_instructions.sql")
+	if err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, string(instructions)); err != nil {
+		return fmt.Errorf("complete built-in exercise details: %w", err)
+	}
 	return nil
 }
 

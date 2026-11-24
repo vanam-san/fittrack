@@ -128,19 +128,35 @@
 }
 
 .fit-sidebar {
-  @apply flex flex-wrap items-center gap-4 border-b bg-card px-5 py-4 md:min-h-screen md:w-56 md:shrink-0 md:flex-col md:items-stretch md:gap-9 md:border-r md:border-b-0 md:p-6;
+  @apply flex flex-col gap-3 border-b bg-card px-4 py-3 sm:px-6 lg:w-52 lg:shrink-0 lg:gap-8 lg:border-r lg:border-b-0 lg:p-5;
+}
+
+.fit-main-nav {
+  @apply grid grid-cols-3 gap-1 md:grid-cols-6 lg:grid-cols-1;
 }
 
 .fit-nav {
-  @apply flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground outline-offset-2 hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 disabled:opacity-55;
+  @apply flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1.5 py-2 text-sm font-medium text-muted-foreground outline-offset-2 hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 disabled:opacity-55 lg:justify-start lg:gap-2 lg:px-3;
 }
 
 .fit-nav[aria-current='page'] {
   @apply bg-accent text-accent-foreground;
 }
 
+.fit-page {
+  @apply space-y-5 sm:space-y-6;
+}
+
+.fit-sections {
+  @apply flex flex-wrap gap-1 border-b pb-2;
+}
+
+.fit-sections [aria-current='page'] {
+  @apply bg-accent text-accent-foreground;
+}
+
 .fit-panel {
-  @apply rounded-2xl border bg-card p-5 text-card-foreground sm:p-6;
+  @apply min-w-0 rounded-2xl border bg-card p-4 text-card-foreground wrap-anywhere sm:p-6;
 }
 
 .fit-icon {
@@ -148,7 +164,7 @@
 }
 
 .fit-select {
-  @apply h-8 w-full rounded-lg border border-input bg-card px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50;
+  @apply h-9 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50;
 }
 
 .fit-label {

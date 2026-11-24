@@ -153,7 +153,7 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="fit-page">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
         Nutrition
@@ -186,10 +186,7 @@ onMounted(load)
       >
     </div>
     <template v-else>
-      <nav
-        aria-label="Nutrition sections"
-        class="flex flex-wrap gap-1 border-b pb-2"
-      >
+      <nav aria-label="Nutrition sections" class="fit-sections">
         <Button
           type="button"
           :variant="section === 'journal' ? 'secondary' : 'ghost'"
@@ -217,7 +214,9 @@ onMounted(load)
               <p class="text-sm text-muted-foreground">Daily totals</p>
               <h2 class="text-lg font-semibold">{{ formatDate(date) }}</h2>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
+            <div
+              class="grid max-w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2"
+            >
               <Button
                 type="button"
                 size="icon"
@@ -229,7 +228,7 @@ onMounted(load)
               /></Button>
               <input
                 :value="date"
-                class="fit-field w-auto"
+                class="fit-field"
                 type="date"
                 min="0001-01-01"
                 max="9999-12-31"
@@ -387,7 +386,7 @@ onMounted(load)
         >
           Save frequently logged foods to add them to any date.
         </p>
-        <ul v-else class="grid gap-3 xl:grid-cols-2">
+        <ul v-else class="grid gap-3 @min-[44rem]/main:grid-cols-2">
           <li
             v-for="preset in presets"
             :key="preset.id"

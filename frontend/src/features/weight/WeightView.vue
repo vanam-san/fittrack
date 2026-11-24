@@ -162,7 +162,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="fit-page">
     <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Weight</h1>
     <p v-if="status" role="status" class="text-sm text-muted-foreground">
       {{ status }}
@@ -170,7 +170,7 @@ onMounted(async () => {
     <p v-if="saveError" role="alert" class="text-sm text-destructive">
       {{ saveError }}
     </p>
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid gap-4 @min-[44rem]/main:grid-cols-2">
       <section
         class="fit-panel space-y-4"
         aria-labelledby="measurement-heading"

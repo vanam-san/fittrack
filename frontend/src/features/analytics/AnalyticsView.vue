@@ -170,7 +170,7 @@ onMounted(refresh)
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="fit-page">
     <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Analytics</h1>
     <form
       class="fit-panel flex flex-wrap items-end gap-3"
@@ -215,7 +215,10 @@ onMounted(refresh)
               : 'No food logged in this date range.'
           }}
         </p>
-        <div v-if="report.total.loggedDays" class="grid gap-4 lg:grid-cols-2">
+        <div
+          v-if="report.total.loggedDays"
+          class="grid gap-4 @min-[44rem]/main:grid-cols-2"
+        >
           <MetricChart
             title="Calories"
             unit="kcal"
@@ -285,7 +288,7 @@ onMounted(refresh)
             Training volume is the sum of load × reps across logged weighted
             sets.
           </p>
-          <div class="grid gap-4 lg:grid-cols-2">
+          <div class="grid gap-4 @min-[44rem]/main:grid-cols-2">
             <MetricChart
               v-for="chart in workoutCharts"
               :key="chart.title"

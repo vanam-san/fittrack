@@ -54,19 +54,27 @@ const macros = [
 </script>
 
 <template>
-  <div class="space-y-7">
+  <div class="fit-page">
     <header class="space-y-2">
       <p class="text-sm text-muted-foreground">{{ today }}</p>
       <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
         Dashboard
       </h1>
-      <p v-if="preferences.displayName" class="text-muted-foreground">
+      <p
+        v-if="preferences.displayName"
+        class="text-muted-foreground wrap-anywhere"
+      >
         Welcome, {{ preferences.displayName }}.
       </p>
     </header>
 
-    <div class="grid gap-4 xl:grid-cols-3">
-      <section class="fit-panel space-y-4" aria-labelledby="nutrition-title">
+    <div
+      class="grid gap-4 @min-[32rem]/main:grid-cols-2 @min-[48rem]/main:grid-cols-3"
+    >
+      <section
+        class="fit-panel flex flex-col items-start gap-4"
+        aria-labelledby="nutrition-title"
+      >
         <div class="flex items-center gap-3">
           <span class="fit-icon"><Flame :size="18" aria-hidden="true" /></span>
           <h2 id="nutrition-title" class="font-semibold">Today’s nutrition</h2>
@@ -109,11 +117,15 @@ const macros = [
         <Button
           type="button"
           variant="outline"
+          class="mt-auto"
           @click="emit('navigate', 'nutrition')"
           >Open journal</Button
         >
       </section>
-      <section class="fit-panel space-y-4" aria-labelledby="weight-title">
+      <section
+        class="fit-panel flex flex-col items-start gap-4"
+        aria-labelledby="weight-title"
+      >
         <div class="flex items-center gap-3">
           <span class="fit-icon"><Scale :size="18" aria-hidden="true" /></span>
           <h2 id="weight-title" class="font-semibold">Latest weight</h2>
@@ -141,11 +153,15 @@ const macros = [
         <Button
           type="button"
           variant="outline"
+          class="mt-auto"
           @click="emit('navigate', 'weight')"
           >Open weight log</Button
         >
       </section>
-      <section class="fit-panel space-y-4" aria-labelledby="workout-title">
+      <section
+        class="fit-panel flex flex-col items-start gap-4"
+        aria-labelledby="workout-title"
+      >
         <div class="flex items-center gap-3">
           <span class="fit-icon"
             ><Dumbbell :size="18" aria-hidden="true"
@@ -180,6 +196,7 @@ const macros = [
         <Button
           type="button"
           variant="outline"
+          class="mt-auto"
           @click="emit('navigate', 'workouts')"
         >
           {{ workouts?.active ? 'Open current workout' : 'Open workouts' }}
