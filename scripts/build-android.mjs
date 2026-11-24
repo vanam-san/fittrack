@@ -5,7 +5,9 @@ import {
   cpSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
+  statSync,
   writeFileSync,
 } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -84,7 +86,6 @@ function edit(path, changes) {
       throw new Error(`Wails template changed in ${path}: ${before}`)
     source = next
   }
-  chmodSync(path, 0o644)
   writeFileSync(path, source)
 }
 
@@ -100,6 +101,14 @@ const wails = run(
 cpSync(join(wails, 'internal/commands/build_assets/android'), project, {
   recursive: true,
 })
+// Go's module cache is read-only. Gradle and the FitTrack overlays need a writable copy.
+for (const entry of readdirSync(project, {
+  recursive: true,
+  withFileTypes: true,
+})) {
+  const path = join(entry.parentPath, entry.name)
+  chmodSync(path, statSync(path).mode | 0o200)
+}
 
 const packageDir = join(main, 'java/com/wails/app')
 copyFileSync(
