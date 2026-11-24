@@ -20,7 +20,7 @@ func Open(ctx context.Context, path string) (*sql.DB, error) {
 		return nil, fmt.Errorf("create application data directory: %w", err)
 	}
 
-	db, err := sql.Open("sqlite", sqliteURI(path, sqlitePrimaryQuery))
+	db, err := sql.Open("sqlite", sqliteURI(path, "_pragma=foreign_keys(ON)&_pragma=busy_timeout(5000)&_pragma=trusted_schema(OFF)&_txlock=immediate"))
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}

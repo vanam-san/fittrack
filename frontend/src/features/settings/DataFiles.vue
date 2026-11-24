@@ -61,8 +61,7 @@ function exportRecords(event: MouseEvent, format: 'csv' | 'json') {
   trigger = event.currentTarget as HTMLButtonElement
   return run(async () => {
     const path = await Export(format)
-    if (!path) return
-    message.value = `Exported to ${path}.`
+    if (path) message.value = `Exported to ${path}.`
   })
 }
 
@@ -70,8 +69,7 @@ function createBackup(event: MouseEvent) {
   trigger = event.currentTarget as HTMLButtonElement
   return run(async () => {
     const path = await Backup()
-    if (!path) return
-    message.value = `Backup saved to ${path}.`
+    if (path) message.value = `Backup saved to ${path}.`
   })
 }
 

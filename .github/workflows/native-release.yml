@@ -62,7 +62,7 @@ jobs:
         run: wails3 build
       - name: Run Go checks
         run: |
-          test -z "$(gofmt -l main.go storage_*.go internal)"
+          test -z "$(gofmt -l main.go internal)"
           go test . ./internal/...
           go vet . ./internal/...
       - name: Run frontend checks
