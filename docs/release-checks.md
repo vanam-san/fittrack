@@ -39,9 +39,13 @@ notes from the tagged commit, the Windows x64 installer and standalone executabl
 the macOS universal disk image, the Debian amd64 installer, and the Android APK. Branch builds and pull requests
 continue to upload workflow artifacts.
 
+To attach Android screenshots, place `FitTrack-Android-*.png` files under
+`docs/screenshots/<tag>/` in the tagged commit. The publish job uploads them
+alongside the packages.
+
 Use the **Native release** run for the tag to check each platform job and the
 final publish job. Once it succeeds, open the release page and check that all five
-downloads are listed. Keep the published tag attached to its original commit.
+package downloads and any screenshots are listed. Keep the published tag attached to its original commit.
 If a published build needs a fix, use the next patch tag.
 
 ## Diagnose package checks

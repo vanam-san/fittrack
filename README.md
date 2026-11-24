@@ -65,6 +65,12 @@ See the [documentation index](docs/README.md) for installation, data recovery, a
 
 ## Android APK
 
+Download the signed `FitTrack-1.4.1-Android.apk` from the [FitTrack v1.4.1 release](https://github.com/vanam-san/fittrack/releases/tag/v1.4.1). See the [user guide](docs/user-guide.md#install-and-run-offline) for installation and upgrade steps.
+
+| Exercise library | Backup and recovery |
+| --- | --- |
+| [![FitTrack exercise library on Android](docs/screenshots/v1.4.1/FitTrack-Android-Workouts.png)](docs/screenshots/v1.4.1/FitTrack-Android-Workouts.png) | [![FitTrack data and recovery settings on Android](docs/screenshots/v1.4.1/FitTrack-Android-Settings.png)](docs/screenshots/v1.4.1/FitTrack-Android-Settings.png) |
+
 The APK supports Android 8.0 and later on ARM64 and x86-64 with an up-to-date Android System WebView. The interface and database work offline. FitTrack stores data in private app storage, disables Android cloud backup for it, and uses the system document picker for manual file transfers. Save backups outside the app before uninstalling.
 
 Install JDK 21, Android SDK platform and build tools 36, and NDK `29.0.14206865`, in addition to the development tools above. Set `ANDROID_HOME` to the SDK directory and run from the repository root.
