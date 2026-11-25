@@ -177,12 +177,11 @@ jobs:
           windows=(packages/FitTrack-Windows-x64/*-installer.exe)
           macos=(packages/FitTrack-macOS-universal/*.dmg)
           linux=(packages/FitTrack-Linux-amd64/*.deb)
-          screenshots=(docs/screenshots/*.png)
           portable=packages/FitTrack-Windows-x64/fittrack.exe
           test "${#windows[@]}" -eq 1
           test "${#macos[@]}" -eq 1
           test "${#linux[@]}" -eq 1
-          for asset in "${windows[@]}" "${macos[@]}" "${linux[@]}" "$portable" "${screenshots[@]}"; do
+          for asset in "${windows[@]}" "${macos[@]}" "${linux[@]}" "$portable"; do
             test -s "$asset"
           done
           notes="docs/releases/$GITHUB_REF_NAME.md"
@@ -192,4 +191,4 @@ jobs:
           fi
           gh release create "$GITHUB_REF_NAME" --verify-tag --notes-file "$notes" \
             --title "FitTrack $GITHUB_REF_NAME" \
-            "${windows[0]}" "${macos[0]}" "${linux[0]}" "$portable" "${screenshots[@]}"
+            "${windows[0]}" "${macos[0]}" "${linux[0]}" "$portable"

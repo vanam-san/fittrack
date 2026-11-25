@@ -37,12 +37,9 @@ notes from the tagged commit, the Windows x64 installer and standalone executabl
 the macOS universal disk image, and the Debian amd64 installer. Branch builds and pull requests
 continue to upload workflow artifacts.
 
-The publish job attaches the PNG screenshots from `docs/screenshots/` alongside
-the packages.
-
 Use the **Native release** run for the tag to check each platform job and the
 final publish job. Once it succeeds, open the release page and check that all four
-package downloads and any screenshots are listed. Keep the published tag attached to its original commit.
+package downloads are listed. Keep the published tag attached to its original commit.
 If a published build needs a fix, use the next patch tag.
 
 ## Diagnose package checks
